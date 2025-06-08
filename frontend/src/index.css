@@ -1,13 +1,96 @@
-body {
+body, html, #root {
+  height: 100%;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
+/* Optional: Style code blocks */
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* SimpleBar will handle scrollbars for your landing page. 
+   If you want to style SimpleBar's scrollbar, you can add: */
+.simplebar-scrollbar:before {
+  background: linear-gradient(135deg, #1976d2 60%, #63a4ff 100%) !important;
+}
+.simplebar-scrollbar.simplebar-visible:before {
+  opacity: 1;
+}
+.simplebar-track.simplebar-vertical {
+  width: 10px !important;
+  border-radius: 8px;
+  right: 2px;
+}
+/* Button hover */
+.button-hover:hover {
+  background-color: #1565c0 !important;
+  box-shadow: 0 4px 12px #1565c033 !important;
+  transform: scale(1.05);
+  transition: all 0.3s ease;
+}
+
+/* Link hover */
+.link-hover:hover {
+  color: #63a4ff !important;
+  text-decoration: underline !important;
+  transition: color 0.3s ease;
+}
+
+/* Card hover */
+.card-hover:hover {
+  box-shadow: 0 8px 24px #1976d244 !important;
+  transform: translateY(-6px);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(90deg, #1976d2 30%, #63a4ff 70%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background 0.4s;
+}
+.header-btn {
+  border: 2px solid #1976d2;
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  display: inline-block;
+  background: #fff;
+  color: #1976d2;
+}
+
+.header-btn-outline:hover {
+  background: #e0e0e0 !important; /* Light grey */
+  color: #1976d2 !important;
+  border-color: #1976d2;
+}
+.role-btn {
+  background: #eee;
+  color: #1976d2;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 18px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.role-btn.selected,
+.role-btn:hover {
+  background: #1976d2;
+  color: #fff;
 }
