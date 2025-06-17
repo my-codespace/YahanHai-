@@ -60,7 +60,7 @@ export default function Login({ onAuth }) {
     if (res.token) {
       toast.success("Login successful! Redirecting...");
       setTimeout(() => {
-        onAuth(res.token, res.role);
+        onAuth(res.token, res.role, res.user);
       }, 1500);
     } else {
       setError(res.msg || "Login failed");

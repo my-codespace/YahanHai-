@@ -50,29 +50,80 @@ app.use((err, req, res, next) => {
   res.status(500).json({ msg: 'Server error', error: err.message });
 });
 
-// Socket.IO real-time logic
-io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
+// --- Socket.IO real-time logic with heartbeat and multi-device support ---
+const userConnections = new Map(); // userId → Set of socket IDs
 
-  // Join room and send active users of opposite role
+io.on('connection', (socket) => {
+  const userId = socket.handshake.query.userId;
+  console.log('New client connected:', socket.id, 'User:', userId);
+
+  if (userId) {
+    // Track connection
+    if (!userConnections.has(userId)) {
+      userConnections.set(userId, new Set());
+    }
+    userConnections.get(userId).add(socket.id);
+
+    // Mark online if first connection
+    if (userConnections.get(userId).size === 1) {
+      User.findByIdAndUpdate(userId, {
+        isOnline: true,
+        lastSeen: null
+      }).exec().then(async () => {
+        const user = await User.findById(userId);
+        if (user.role === 'retailer') {
+          // Find all customers who follow this retailer
+          User.find({ followedRetailers: userId })
+            .select('_id')
+            .then(customers => {
+              customers.forEach(customer => {
+                // Emit to all sockets; in production, target only relevant sockets
+                io.emit('retailer-online', { retailerId: userId, retailerName: user.name });
+              });
+            })
+            .catch(err => console.error('Error finding followers:', err));
+        }
+      });
+      io.emit('user-status-changed', { userId, isOnline: true });
+    }
+
+    // Heartbeat handler (updates lastSeen but keeps user online)
+    socket.on('heartbeat', async () => {
+      await User.findByIdAndUpdate(userId, {
+        lastSeen: new Date()
+      }).exec();
+    });
+  }
+
+  // Join room and send active users with online status
   socket.on('join-room', (userRole) => {
     if (userRole === 'customer') {
-      socket.join('retailers');
       User.find({
         role: 'retailer',
         "location.lat": { $exists: true, $ne: null },
         "location.lng": { $exists: true, $ne: null }
       }).select('-password')
-        .then(retailers => socket.emit('active-users', retailers))
+        .then(retailers => {
+          const retailersWithStatus = retailers.map(r => ({
+            ...r.toObject(),
+            isOnline: userConnections.has(r._id.toString())
+          }));
+          socket.emit('active-users', retailersWithStatus);
+        })
         .catch(err => console.error('Error fetching retailers:', err));
     } else if (userRole === 'retailer') {
-      socket.join('customers');
       User.find({
         role: 'customer',
         "location.lat": { $exists: true, $ne: null },
         "location.lng": { $exists: true, $ne: null }
       }).select('-password')
-        .then(customers => socket.emit('active-users', customers))
+        .then(customers => {
+          const customersWithStatus = customers.map(c => ({
+            ...c.toObject(),
+            isOnline: userConnections.has(c._id.toString())
+          }));
+          socket.emit('active-users', customersWithStatus);
+        })
         .catch(err => console.error('Error fetching customers:', err));
     }
   });
@@ -104,8 +155,21 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('disconnect', () => {
+  // Handle disconnect
+  socket.on('disconnect', async () => {
     console.log('Client disconnected:', socket.id);
+    if (userId) {
+      userConnections.get(userId)?.delete(socket.id);
+
+      if (userConnections.get(userId)?.size === 0) {
+        userConnections.delete(userId);
+        await User.findByIdAndUpdate(userId, {
+          isOnline: false,
+          lastSeen: new Date()
+        }).exec();
+        io.emit('user-status-changed', { userId, isOnline: false });
+      }
+    }
   });
 });
 

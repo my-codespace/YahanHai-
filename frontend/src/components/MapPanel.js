@@ -1,9 +1,12 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import createAvatarIcon from '../utils/createAvatarIcon';
 
 export default function MapPanel({ location, markers, role, user }) {
+  const navigate = useNavigate();
+
   if (!location) {
     return (
       <div style={{
@@ -19,6 +22,12 @@ export default function MapPanel({ location, markers, role, user }) {
       </div>
     );
   }
+
+  const handleVisitProfile = (marker) => {
+    if (marker?.role === 'retailer' && marker?._id) {
+      navigate(`/dashboard/retailer/${marker._id}`);
+    }
+  };
 
   return (
     <div style={{
@@ -42,22 +51,60 @@ export default function MapPanel({ location, markers, role, user }) {
           <Popup>
             {role === 'customer' ? 'You are here' : 'Your business'}
             <br />
-            {user.name || user.shopName}
+            {user?.name || user?.shopName}
           </Popup>
         </Marker>
         {/* Other users */}
-        {markers.map((marker, idx) => (
+        {markers.filter(Boolean).map((marker, idx) => (
           <Marker
             key={idx}
-            position={[marker.lat, marker.lng]}
+            position={[
+              marker?.lat ?? marker?.location?.lat,
+              marker?.lng ?? marker?.location?.lng
+            ]}
             icon={createAvatarIcon(marker)}
           >
             <Popup>
-              <b>{marker.name || marker.shopName}</b>
-              <br />
-              {marker.role === 'retailer' ? 'Retailer' : 'Customer'}
-              <br />
-              {marker.email || marker.businessCategory || marker.city}
+              <div style={{ minWidth: 200 }}>
+                <h4 style={{ margin: '0 0 8px 0' }}>
+                  {marker?.shopName || marker?.name || 'Unknown'}
+                </h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <div style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: marker?.isOnline ? '#4CAF50' : '#757575'
+                  }} />
+                  <small>
+                    {marker?.isOnline
+                      ? 'Online now'
+                      : `Last active: ${marker?.lastSeen ? new Date(marker.lastSeen).toLocaleTimeString() : 'unknown'}`}
+                  </small>
+                </div>
+                {marker?.role && <div style={{ marginBottom: 4 }}>{marker.role.charAt(0).toUpperCase() + marker.role.slice(1)}</div>}
+                {marker?.email && <div style={{ marginBottom: 4 }}>{marker.email}</div>}
+                {marker?.businessCategory && <div style={{ marginBottom: 4 }}>Category: {marker.businessCategory}</div>}
+                {marker?.operatingHours && <div style={{ marginBottom: 4 }}>Hours: {marker.operatingHours}</div>}
+                {marker?.phone && <div style={{ marginBottom: 4 }}>📞 {marker.phone}</div>}
+                {/* Add Visit Profile button for retailers */}
+                {marker?.role === 'retailer' && (
+                  <button
+                    onClick={() => handleVisitProfile(marker)}
+                    style={{
+                      marginTop: 8,
+                      padding: '6px 12px',
+                      backgroundColor: '#1976d2',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 4,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Visit Profile
+                  </button>
+                )}
+              </div>
             </Popup>
           </Marker>
         ))}

@@ -7,6 +7,8 @@
     password: { type: String, required: true },
     phone: { type: String, required: true },
     role: { type: String, enum: ["customer", "retailer"], required: true },
+    lastSeen: { type: Date },
+    isOnline: { type: Boolean, default: false },
     
     // Customer-specific fields
     interest: { type: String }, // For customers

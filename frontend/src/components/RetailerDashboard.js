@@ -3,11 +3,10 @@ import MapPanel from "./MapPanel";
 import MapPicker from "./MapPicker";
 import { updateUserLocation } from "../api/index.js";
 import { io } from "socket.io-client";
-import createAvatarIcon from "../utils/createAvatarIcon";
 
 const DEFAULT_CENTER = { lat: 28.6139, lng: 77.2090 };
 
-export default function RetailerDashboard({ user, onLogout }) {
+export default function RetailerDashboard({ user, onLogout, searchTerm = "", filterRole = "customer" }) {
   const [mode, setMode] = useState("manual");
   const [location, setLocation] = useState(
     user?.location?.lat && user?.location?.lng
@@ -15,35 +14,69 @@ export default function RetailerDashboard({ user, onLogout }) {
       : DEFAULT_CENTER
   );
   const [users, setUsers] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [showPicker, setShowPicker] = useState(false);
 
-  // Join Socket.IO room and get all active customers
+  // Fetch initial users with status
+  // useEffect(() => {
+  //   fetch('/api/users/with-status')
+  //     .then(res => res.json())
+  //     .then(data => setUsers(data.filter(u => u.location)));
+  // }, []);
+
+  // Socket.IO connection for real-time updates
   useEffect(() => {
     if (!user) return;
-    const socket = io("http://localhost:5000");
-    socket.emit('join-room', user.role);
-
+  
+    // Connect to the socket
+    const socket = io('http://localhost:5000', {
+      query: { userId: user._id }
+    });
+    socket.emit('join-room', user.role); 
+  
+    // Start heartbeat: send 'heartbeat' every 5 seconds
+    const heartbeatInterval = setInterval(() => {
+      socket.emit('heartbeat');
+    }, 5000);
+  
+    // Listen for active users (with online status)
     socket.on('active-users', (activeUsers) => {
       setUsers(activeUsers);
+      // Initialize onlineUsers state
+      const initialOnline = new Set(
+        activeUsers.filter(u => u.isOnline).map(u => u._id)
+      );
+      setOnlineUsers(initialOnline);
     });
-
-    socket.on('location-update', (updatedUser) => {
-      setUsers(prevUsers => {
-        const exists = prevUsers.some(u => u._id === updatedUser._id);
-        if (exists) {
-          return prevUsers.map(u => u._id === updatedUser._id ? updatedUser : u);
-        } else {
-          return [...prevUsers, updatedUser];
-        }
+  
+    // Listen for real-time status changes
+    socket.on('user-status-changed', ({ userId, isOnline }) => {
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        isOnline ? newSet.add(userId) : newSet.delete(userId);
+        return newSet;
       });
     });
-
-    socket.on('user-logged-out', (userId) => {
-      setUsers(prevUsers => prevUsers.filter(u => u._id !== userId));
+  
+    // Listen for location updates
+    socket.on('location-update', (updatedUser) => {
+      setUsers(prev =>
+        prev.map(u => u._id === updatedUser._id ? updatedUser : u)
+      );
     });
-
-    return () => socket.disconnect();
-  }, [user]);
+  
+    // Listen for user logout
+    socket.on('user-logged-out', (userId) => {
+      setUsers(prev => prev.filter(u => u._id !== userId));
+    });
+  
+    // Clean up on unmount
+    return () => {
+      clearInterval(heartbeatInterval);
+      socket.disconnect();
+    };
+  }, [user?._id]);
+  
 
   // Set location (for both manual and live mode)
   const handleLocationChange = (lat, lng) => {
@@ -100,12 +133,26 @@ export default function RetailerDashboard({ user, onLogout }) {
     onLogout();
   };
 
-  const markers = users
-    .filter(u => u && u.role === 'customer' && u.location && u.location.lat && u.location.lng)
+  // Filter users based on searchTerm and filterRole
+  const filteredMarkers = users
+    .filter(u => u && u.location && u.location.lat && u.location.lng)
+    .filter(u => {
+      // Apply role filter
+      if (filterRole !== "all" && u.role !== filterRole) return false;
+      // Apply search filter
+      if (!searchTerm) return true;
+      const term = searchTerm.toLowerCase();
+      return (
+        (u.name && u.name.toLowerCase().includes(term)) ||
+        (u.shopName && u.shopName.toLowerCase().includes(term)) ||
+        (u.city && u.city.toLowerCase().includes(term))
+      );
+    })
     .map(u => ({
       ...u,
       lat: u.location.lat,
-      lng: u.location.lng
+      lng: u.location.lng,
+      isOnline: onlineUsers.has(u._id)
     }));
 
   return (
@@ -173,38 +220,10 @@ export default function RetailerDashboard({ user, onLogout }) {
       )}
       <MapPanel
         location={location}
-        markers={markers}
+        markers={filteredMarkers}
         role={user.role}
         user={user}
       />
-      <div style={{ marginTop: 20 }}>
-        <button
-          onClick={handleLogout}
-          style={{
-            background: "#e53935",
-            color: "white",
-            border: "none",
-            borderRadius: 6,
-            padding: "8px 16px",
-            fontWeight: 600,
-          }}
-        >
-          Logout
-        </button>
-        <button
-          style={{
-            marginLeft: 8,
-            background: "#1976d2",
-            color: "white",
-            border: "none",
-            borderRadius: 6,
-            padding: "8px 16px",
-            fontWeight: 600,
-          }}
-        >
-          Edit Profile
-        </button>
-      </div>
     </div>
   );
 }

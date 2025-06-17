@@ -1,37 +1,63 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const router = express.Router();
 
-// --- User Profile Routes ---
+// --- Place all specific routes BEFORE parameterized routes ---
 
-// Get user profile (all fields except password)
-router.get('/:id', async (req, res) => {
+// Get all users with status (for retailers)
+router.get('/with-status', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
-    if (!user) return res.status(404).json({ msg: "User not found" });
-    res.json(user);
+    const users = await User.find().select('-password');
+    res.json(users);
   } catch (err) {
     res.status(500).json({ msg: "Server error" });
   }
 });
 
-// Update user profile (all fields except password)
-router.put('/:id', async (req, res) => {
-  const updateData = req.body;
+// Get interested customers for a retailer
+router.get('/interested-customers', async (req, res) => {
+  const { retailerId } = req.query;
+  if (!retailerId) return res.status(400).json({ msg: 'Missing retailerId' });
+  if (!mongoose.Types.ObjectId.isValid(retailerId)) {
+    return res.status(400).json({ msg: 'Invalid retailerId' });
+  }
+
   try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    ).select("-password");
-    if (!user) return res.status(404).json({ msg: "User not found" });
-    res.json(user);
+    console.log('Fetching interested customers for retailer:', retailerId);
+    const customers = await User.find({
+      role: 'customer',
+      followedRetailers: new mongoose.Types.ObjectId(retailerId),
+      location: { $exists: true },
+    }).select('-password');
+
+    console.log('Found customers:', customers.length);
+    res.json(customers.map(c => ({
+      id: c._id,
+      name: c.name,
+      profilePic: c.profilePic,
+      city: c.city,
+      interest: c.interest,
+      lat: c.location.lat,
+      lng: c.location.lng,
+    })));
   } catch (err) {
-    res.status(500).json({ msg: "Server error" });
+    console.error('Error in /interested-customers:', err.message, err.stack);
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 
-// --- Location & Following ---
+// Unfollow a retailer
+router.post('/unfollow', async (req, res) => {
+  const { customerId, retailerId } = req.body;
+  if (!customerId || !retailerId) return res.status(400).json({ msg: 'Missing data' });
+  try {
+    await User.findByIdAndUpdate(customerId, { $pull: { followedRetailers: retailerId } });
+    res.json({ msg: 'Unfollowed successfully' });
+  } catch (err) {
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
 
 // Update user location
 router.post('/update-location', async (req, res) => {
@@ -41,30 +67,32 @@ router.post('/update-location', async (req, res) => {
   }
   try {
     const user = await User.findByIdAndUpdate(
-      userId, 
+      userId,
       { location: { lat, lng } },
       { new: true }
     ).select("-password");
-
-    // Use req.io to broadcast location update
     if (req.io) req.io.emit("location-update", user);
-
     res.json({ msg: 'Location updated', user });
   } catch (err) {
     res.status(500).json({ msg: 'Server error' });
   }
 });
 
-
-
 // Follow a retailer
 router.post('/follow', async (req, res) => {
   const { customerId, retailerId } = req.body;
-  if (!customerId || !retailerId) return res.status(400).json({ msg: 'Missing data' });
+  if (!mongoose.Types.ObjectId.isValid(customerId) || !mongoose.Types.ObjectId.isValid(retailerId)) {
+    return res.status(400).json({ msg: 'Invalid customerId or retailerId' });
+  }
   try {
-    await User.findByIdAndUpdate(customerId, { $addToSet: { followedRetailers: retailerId } });
+    await User.findByIdAndUpdate(
+      customerId,
+      { $addToSet: { followedRetailers: new mongoose.Types.ObjectId(retailerId) } },
+      { new: true }
+    );
     res.json({ msg: 'Followed successfully' });
   } catch (err) {
+    console.error('Error in /follow:', err);
     res.status(500).json({ msg: 'Server error' });
   }
 });
@@ -147,11 +175,11 @@ router.get('/customers', async (req, res) => {
     lng: c.location.lng,
   })));
 });
-// Add this to users.js
-// Place this near the top of your users.js
+
+// Get online users
 router.get('/online', async (req, res) => {
   try {
-    const role = req.query.role; // 'customer' or 'retailer'
+    const role = req.query.role;
     const filter = {
       "location.lat": { $exists: true, $ne: null },
       "location.lng": { $exists: true, $ne: null }
@@ -164,33 +192,43 @@ router.get('/online', async (req, res) => {
   }
 });
 
+// --- Parameterized routes LAST ---
 
-
-
-// Get interested customers for a retailer
-router.get('/interested-customers', async (req, res) => {
-  const { retailerId } = req.query;
-  if (!retailerId) return res.status(400).json({ msg: 'Missing retailerId' });
-
+// Update user profile
+router.put('/:id', async (req, res) => {
   try {
-    const customers = await User.find({
-      role: 'customer',
-      followedRetailers: retailerId,
-      location: { $exists: true },
-    }).select('-password');
+    const { id } = req.params;
+    const updateData = req.body;
 
-    res.json(customers.map(c => ({
-      id: c._id,
-      name: c.name,
-      profilePic: c.profilePic,
-      city: c.city,
-      interest: c.interest,
-      lat: c.location.lat,
-      lng: c.location.lng,
-    })));
+    // For security, remove fields that should not be updated by the user
+    delete updateData.role;
+    delete updateData._id;
+    delete updateData.password;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+    res.json(updatedUser);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get user by ID (any role)
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) return res.status(404).json({ msg: "User not found" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ msg: "Server error" });
   }
 });
 

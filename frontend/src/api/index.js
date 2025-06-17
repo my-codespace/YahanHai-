@@ -29,10 +29,9 @@ export async function getNearbyCustomers(lat, lng) {
 
 export async function getInterestedCustomers(retailerId) {
   const res = await fetch(`${API_URL}/users/interested-customers?retailerId=${retailerId}`);
+  if (!res.ok) throw new Error(`Failed to fetch interested customers: ${res.statusText}`);
   return res.json();
 }
-
-
 
 export async function getUserProfile(userId) {
   const res = await fetch(`${API_URL}/users/${userId}`);
@@ -58,11 +57,17 @@ export async function followRetailer(customerId, retailerId) {
   });
   return res.json();
 }
-// In your api/index.js
-export async function getAllUsers(lat, lng) {
-  const res = await fetch(`http://localhost:5000/api/users/all?lat=${lat}&lng=${lng}`);
+
+export async function unfollowRetailer(customerId, retailerId) {
+  const res = await fetch(`${API_URL}/users/unfollow`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ customerId, retailerId }),
+  });
+  if (!res.ok) throw new Error('Failed to unfollow retailer');
   return res.json();
 }
+
 export async function getAllOnlineUsers(role) {
   const res = await fetch(`${API_URL}/users/online?role=${role}`);
   return res.json();
