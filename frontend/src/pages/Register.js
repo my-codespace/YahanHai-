@@ -128,7 +128,7 @@ if (form.role === 'retailer') {
     if (res.token) {
       toast.success("Registration successful! Redirecting...");
       setTimeout(() => {
-        onAuth(res.token, form.role);
+        onAuth(res.token, res.role, res.user); // Pass user object from backend response
       }, 1500);
     } else {
       setError(res.msg || "Registration failed");

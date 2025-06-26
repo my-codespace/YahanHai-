@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Message from '../components/Message';
+import Card from '../components/Card';
 
 function EditProfile({ user, setUser }) {
   const [formData, setFormData] = useState({
@@ -8,8 +9,6 @@ function EditProfile({ user, setUser }) {
     phone: '',
     city: '',
     interest: '',
-    shop416: '', // <-- WRONG! Should be shopName
-    // Corrected:
     shopName: '',
     businessCategory: '',
     businessDescription: '',
@@ -68,8 +67,8 @@ function EditProfile({ user, setUser }) {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>
-      <h1>Edit Profile</h1>
+    <Card style={{ maxWidth: 800, margin: '32px auto' }}>
+      <h1 style={{ marginTop: 0, fontWeight: 700, fontSize: '2rem', letterSpacing: -1 }}>Edit Profile</h1>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
           <label>Name</label>
@@ -79,7 +78,7 @@ function EditProfile({ user, setUser }) {
             value={formData.name}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
+            style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
           />
         </div>
         <div style={{ marginBottom: 16 }}>
@@ -90,7 +89,7 @@ function EditProfile({ user, setUser }) {
             value={formData.email}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
+            style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
           />
         </div>
         <div style={{ marginBottom: 16 }}>
@@ -101,7 +100,7 @@ function EditProfile({ user, setUser }) {
             value={formData.phone}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
+            style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
           />
         </div>
 
@@ -115,7 +114,7 @@ function EditProfile({ user, setUser }) {
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                style={{ width: '100%', padding: 8, marginTop: 4 }}
+                style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -125,7 +124,7 @@ function EditProfile({ user, setUser }) {
                 name="interest"
                 value={formData.interest}
                 onChange={handleChange}
-                style={{ width: '100%', padding: 8, marginTop: 4 }}
+                style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
               />
             </div>
           </>
@@ -141,7 +140,7 @@ function EditProfile({ user, setUser }) {
                 name="shopName"
                 value={formData.shopName}
                 onChange={handleChange}
-                style={{ width: '100%', padding: 8, marginTop: 4 }}
+                style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -151,7 +150,7 @@ function EditProfile({ user, setUser }) {
                 name="businessCategory"
                 value={formData.businessCategory}
                 onChange={handleChange}
-                style={{ width: '100%', padding: 8, marginTop: 4 }}
+                style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -160,7 +159,7 @@ function EditProfile({ user, setUser }) {
                 name="businessDescription"
                 value={formData.businessDescription}
                 onChange={handleChange}
-                style={{ width: '100%', padding: 8, marginTop: 4, height: 100 }}
+                style={{ width: '100%', padding: 8, marginTop: 4, height: 100, borderRadius: 6, border: '1px solid #ccc' }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -170,7 +169,7 @@ function EditProfile({ user, setUser }) {
                 name="operatingHours"
                 value={formData.operatingHours}
                 onChange={handleChange}
-                style={{ width: '100%', padding: 8, marginTop: 4 }}
+                style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -193,10 +192,14 @@ function EditProfile({ user, setUser }) {
           style={{
             background: '#1976d2',
             color: 'white',
-            padding: '8px 16px',
-            borderRadius: 4,
+            padding: '10px 22px',
+            borderRadius: 6,
             border: 'none',
+            fontWeight: 600,
+            fontSize: 16,
+            marginTop: 8,
             cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(25, 118, 210, 0.08)'
           }}
         >
           Save Changes
@@ -209,9 +212,8 @@ function EditProfile({ user, setUser }) {
           onClose={() => setShowMessage(false)}
         />
       )}
-    </div>
+    </Card>
   );
 }
 
-// Corrected:
 export default EditProfile;

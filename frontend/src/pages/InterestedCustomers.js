@@ -61,7 +61,7 @@ function InterestedCustomers({ user }) {
             }}
           >
             <img
-              src={customer.profilePic || '/default-avatar.png'}
+              src={user?.profilePic ? `http://localhost:5000/${user.profilePic}` : '/default-avatar.png'}
               alt={customer.name}
               style={{
                 width: 56,

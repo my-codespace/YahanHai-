@@ -32,7 +32,7 @@ function Profile() {
       }}
     >
       <img
-        src={user.profilePic || '/default-avatar.png'}
+        src={user?.profilePic ? `http://localhost:5000/${user.profilePic}` : '/default-avatar.png'}
         alt={user.name}
         style={{
           width: 110,

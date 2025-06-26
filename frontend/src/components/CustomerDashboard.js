@@ -157,35 +157,29 @@ export default function CustomerDashboard({ user, onLogout, searchTerm = "", fil
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-      <h1>Dashboard</h1>
-      <p>You are logged in as a <b>customer</b>.</p>
-      <div style={{ marginBottom: 16 }}>
+      <div className="dashboard-header">
+        <div className="dashboard-header-content">
+          <h1>
+            Welcome back, {user.name}!
+          </h1>
+          <p className="dashboard-subtitle">
+            {user.role === 'retailer'
+              ? "Manage your store, connect with customers, and track your business performance."
+              : "Explore local businesses, discover new offers, and connect with retailers near you."}
+          </p>
+        </div>
+      </div>
+
+      <div className="location-btn-group">
         <button
+          className={`location-btn${mode === "live" ? " primary" : ""}`}
           onClick={() => setMode("live")}
-          style={{
-            background: mode === "live" ? "#1976d2" : "#e3e9f7",
-            color: mode === "live" ? "#fff" : "#1976d2",
-            border: "none",
-            borderRadius: 8,
-            padding: "8px 18px",
-            fontWeight: 600,
-            marginRight: 12,
-            cursor: "pointer",
-          }}
         >
           Share My Live Location
         </button>
         <button
+          className={`location-btn${mode === "manual" ? " primary" : ""}`}
           onClick={() => setShowPicker(true)}
-          style={{
-            background: mode === "manual" ? "#1976d2" : "#e3e9f7",
-            color: mode === "manual" ? "#fff" : "#1976d2",
-            border: "none",
-            borderRadius: 8,
-            padding: "8px 18px",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
         >
           Set Location Manually
         </button>

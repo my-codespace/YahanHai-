@@ -1,26 +1,36 @@
-import React, { useState } from 'react';
-import { useDarkMode } from '../hooks/useDarkMode';
+import React, { useState, useEffect } from 'react';
+import Card from '../components/Card';
 
 function SettingsView() {
-  const [isDarkMode, toggleDarkMode] = useDarkMode();
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('darkMode') === 'true';
+  });
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     const saved = localStorage.getItem('notificationsEnabled');
     return saved === 'true';
   });
 
+  useEffect(() => {
+    localStorage.setItem('darkMode', isDarkMode);
+    document.body.classList.toggle('dark-mode', isDarkMode);
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+  };
+
   const toggleNotifications = () => {
     const newValue = !notificationsEnabled;
     setNotificationsEnabled(newValue);
     localStorage.setItem('notificationsEnabled', newValue);
-    // Optional: Request permission for browser notifications
     if (newValue && window.Notification && Notification.permission !== 'granted') {
       Notification.requestPermission();
     }
   };
 
   return (
-    <div className="settings-panel" style={{ padding: 24 }}>
-      <h2>Settings</h2>
+    <Card>
+      <h2 style={{ marginTop: 0 }}>Settings</h2>
       <div style={{ marginBottom: 16 }}>
         <label>
           <input
@@ -41,7 +51,7 @@ function SettingsView() {
           Enable notifications
         </label>
       </div>
-    </div>
+    </Card>
   );
 }
 

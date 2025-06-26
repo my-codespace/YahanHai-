@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bar, Pie, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
+import Card from './Card';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
@@ -8,7 +9,6 @@ ChartJS.register(
 );
 
 function AnalyticsView() {
-  // Example data
   const data = {
     labels: ['Retailers', 'Customers', 'Active Today', 'Locations'],
     datasets: [{
@@ -36,7 +36,7 @@ function AnalyticsView() {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 800, margin: '0 auto' }}>
+    <Card>
       <div style={{ marginBottom: 24 }}>
         <Bar data={data} options={options} />
       </div>
@@ -46,7 +46,7 @@ function AnalyticsView() {
       <div>
         <Line data={data} options={options} />
       </div>
-    </div>
+    </Card>
   );
 }
 

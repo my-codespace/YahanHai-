@@ -1,4 +1,5 @@
 import React from 'react';
+import Card from './Card';
 
 function NotificationsView() {
   const notifications = [
@@ -8,17 +9,21 @@ function NotificationsView() {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <h2>Notifications</h2>
+    <Card>
+      <h2 style={{ marginTop: 0 }}>Notifications</h2>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {notifications.map(notif => (
-          <li key={notif.id} style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 8 }}>
+          <li
+            key={notif.id}
+            className="notification-item"
+          >
             <div>{notif.text}</div>
-            <div style={{ fontSize: 12, color: '#666' }}>{notif.time}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{notif.time}</div>
           </li>
+          
         ))}
       </ul>
-    </div>
+    </Card>
   );
 }
 

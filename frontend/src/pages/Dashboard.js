@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getUserProfile } from '../api/index.js';
-
 import CustomerDashboard from '../components/CustomerDashboard';
 import RetailerDashboard from '../components/RetailerDashboard';
 import { ToastContainer } from 'react-toastify';

@@ -102,7 +102,9 @@ router.post('/register', upload.fields([
     const payload = { userId: user.id, role: user.role };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    res.json({ token, role: user.role });
+    const userResponse = user.toObject(); // Convert Mongoose doc to plain JS object
+    delete userResponse.password; // Remove password before sending
+    res.json({ token, role: user.role, user: userResponse });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
