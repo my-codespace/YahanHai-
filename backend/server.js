@@ -6,7 +6,6 @@ const cors = require('cors');
 const path = require('path');
 const socketIo = require('socket.io');
 const User = require('./models/User');
-
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
@@ -16,10 +15,8 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
-
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Attach Socket.IO to the HTTP server
 const server = http.createServer(app);
 const io = socketIo(server, {
