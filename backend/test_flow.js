@@ -84,10 +84,32 @@ async function runTests() {
        console.log("❌ Failed to find the customer in the $near query.");
     }
 
-    console.log("\nAll API flows and geospatial queries passed successfully!");
+    console.log("7. Testing Follow Retailer functionality...");
+    const followRes = await axios.post(`${API_URL}/users/follow`, {
+      customerId: customerId,
+      retailerId: retailerId
+    });
+    console.log(`✅ Customer followed retailer: ${followRes.data.msg}`);
+
+    // Verify customer's profile is updated
+    const customerProfile = await axios.get(`${API_URL}/users/${customerId}`);
+    if (customerProfile.data.followedRetailers.includes(retailerId)) {
+      console.log("✅ Verified: Retailer ID is in customer's followedRetailers array.");
+    } else {
+      console.log("❌ Failed to verify followedRetailers update.");
+    }
+
+    console.log("8. Testing Unfollow Retailer functionality...");
+    const unfollowRes = await axios.post(`${API_URL}/users/unfollow`, {
+      customerId: customerId,
+      retailerId: retailerId
+    });
+    console.log(`✅ Customer unfollowed retailer: ${unfollowRes.data.msg}`);
+
+    console.log("\nAll API flows, geospatial queries, and follow functionalities passed successfully!");
 
   } catch (error) {
-    console.error("Test failed:", error.response ? error.response.data : error.message);
+    console.error("Test failed:", error.response ? JSON.stringify(error.response.data) : error.message);
   }
 }
 

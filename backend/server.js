@@ -70,14 +70,19 @@ io.on('connection', (socket) => {
         lastSeen: null
       }).exec().then(async () => {
         const user = await User.findById(userId);
-        if (user.role === 'retailer') {
+        if (user && user.role === 'retailer') {
           // Find all customers who follow this retailer
           User.find({ followedRetailers: userId })
             .select('_id')
             .then(customers => {
               customers.forEach(customer => {
-                // Emit to all sockets; in production, target only relevant sockets
-                io.emit('retailer-online', { retailerId: userId, retailerName: user.name });
+                // Target only the specific sockets for this customer
+                const customerSockets = userConnections.get(customer._id.toString());
+                if (customerSockets) {
+                  customerSockets.forEach(socketId => {
+                    io.to(socketId).emit('retailer-online', { retailerId: userId, retailerName: user.name });
+                  });
+                }
               });
             })
             .catch(err => console.error('Error finding followers:', err));
@@ -101,6 +106,18 @@ io.on('connection', (socket) => {
       }
     });
   }
+
+  // Handle manual status toggles from the frontend
+  socket.on('manual-status-change', async (isOnline) => {
+    if (userId) {
+      try {
+        await User.findByIdAndUpdate(userId, { isOnline, lastSeen: new Date() }).exec();
+        io.emit('user-status-changed', { userId, isOnline });
+      } catch (err) {
+        console.error('Status update failed:', err);
+      }
+    }
+  });
 
   // Join room and send active users with online status
   socket.on('join-room', (userRole) => {

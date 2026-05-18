@@ -109,7 +109,7 @@ function AppWrapper() {
           )
         }
       >
-        <Route path="map" element={<MapDashboardView user={user} />} />
+        <Route path="map" element={<MapDashboardView user={user} setUser={setUser} />} />
         <Route path="retailer/:id" element={<RetailerProfile user={user} setUser={setUser} />} />
         <Route path="analytics" element={<AnalyticsView />} />
         <Route path="notifications" element={<NotificationsView />} />
