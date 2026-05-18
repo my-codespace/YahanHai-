@@ -29,7 +29,8 @@ export default function CustomerDashboard({ user, onLogout, searchTerm = "", fil
     if (!user) return;
   
     // Connect to the socket
-    const socket = io('http://localhost:5000', {
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+    const socket = io(socketUrl, {
       query: { userId: user._id }
     });
     socket.emit('join-room', user.role);
@@ -128,8 +129,10 @@ export default function CustomerDashboard({ user, onLogout, searchTerm = "", fil
   };
 
   const handleLogout = async () => {
-    const socket = io("http://localhost:5000");
-    socket.emit('user-logged-out', user._id);
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+    const tempSocket = io(socketUrl);
+    tempSocket.emit('user-logged-out', user._id);
+    setTimeout(() => tempSocket.disconnect(), 1000);
     onLogout();
   };
 

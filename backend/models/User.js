@@ -29,10 +29,32 @@
     // Existing fields
     avatarUrl: { type: String, default: "" },
     followedRetailers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    // Location field using GeoJSON for geospatial queries
     location: {
-      lat: Number,
-      lng: Number,
+      type: {
+        type: String,
+        enum: ['Point'],
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+      },
     },
   }, { timestamps: true });
+
+  // Add 2dsphere index for geospatial queries
+  UserSchema.index({ location: "2dsphere" });
+
+  const locationTransform = (doc, ret) => {
+    if (ret.location && ret.location.coordinates && ret.location.coordinates.length === 2) {
+      ret.location = {
+        lat: ret.location.coordinates[1],
+        lng: ret.location.coordinates[0],
+      };
+    }
+    return ret;
+  };
+
+  UserSchema.set('toJSON', { transform: locationTransform });
+  UserSchema.set('toObject', { transform: locationTransform });
 
   module.exports = mongoose.model("User", UserSchema);

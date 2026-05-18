@@ -6,7 +6,6 @@ const cors = require('cors');
 const path = require('path');
 const socketIo = require('socket.io');
 const User = require('./models/User');
-
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
@@ -14,19 +13,18 @@ const authRoutes = require('./routes/auth');
 connectDB();
 
 const app = express();
-app.use(cors());
+const corsOptions = {
+  origin: process.env.CLIENT_URL || '*', // Use specific origin in production
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+};
+app.use(cors(corsOptions));
 app.use(express.json());
-
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Attach Socket.IO to the HTTP server
 const server = http.createServer(app);
 const io = socketIo(server, {
-  cors: {
-    origin: '*', // For development; restrict in production
-    methods: ['GET', 'POST'],
-  },
+  cors: corsOptions,
 });
 
 // Make io accessible in routes via req.io
@@ -52,6 +50,7 @@ app.use((err, req, res, next) => {
 
 // --- Socket.IO real-time logic with heartbeat and multi-device support ---
 const userConnections = new Map(); // userId → Set of socket IDs
+const lastHeartbeat = new Map(); // userId → timestamp (for throttling DB writes)
 
 io.on('connection', (socket) => {
   const userId = socket.handshake.query.userId;
@@ -89,9 +88,17 @@ io.on('connection', (socket) => {
 
     // Heartbeat handler (updates lastSeen but keeps user online)
     socket.on('heartbeat', async () => {
-      await User.findByIdAndUpdate(userId, {
-        lastSeen: new Date()
-      }).exec();
+      const now = Date.now();
+      const last = lastHeartbeat.get(userId) || 0;
+      // Throttle DB updates to once every 60 seconds per user
+      if (now - last > 60000) {
+        lastHeartbeat.set(userId, now);
+        try {
+          await User.findByIdAndUpdate(userId, { lastSeen: new Date() }).exec();
+        } catch (err) {
+          console.error('Heartbeat update failed:', err);
+        }
+      }
     });
   }
 
@@ -100,8 +107,7 @@ io.on('connection', (socket) => {
     if (userRole === 'customer') {
       User.find({
         role: 'retailer',
-        "location.lat": { $exists: true, $ne: null },
-        "location.lng": { $exists: true, $ne: null }
+        "location.coordinates": { $exists: true, $type: "array", $not: { $size: 0 } }
       }).select('-password')
         .then(retailers => {
           const retailersWithStatus = retailers.map(r => ({
@@ -114,8 +120,7 @@ io.on('connection', (socket) => {
     } else if (userRole === 'retailer') {
       User.find({
         role: 'customer',
-        "location.lat": { $exists: true, $ne: null },
-        "location.lng": { $exists: true, $ne: null }
+        "location.coordinates": { $exists: true, $type: "array", $not: { $size: 0 } }
       }).select('-password')
         .then(customers => {
           const customersWithStatus = customers.map(c => ({
