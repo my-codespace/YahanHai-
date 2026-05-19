@@ -51,7 +51,7 @@ async function runTests() {
       userId: customerId,
       lat: 28.6304,
       lng: 77.2177
-    });
+    }, { headers: { Authorization: `Bearer ${customerToken}` } });
     console.log("✅ Customer location set! Returned Lat/Lng:", 
       custLocRes.data.user.location.lat, custLocRes.data.user.location.lng);
 
@@ -60,12 +60,12 @@ async function runTests() {
       userId: retailerId,
       lat: 28.6310,
       lng: 77.2180
-    });
+    }, { headers: { Authorization: `Bearer ${retailerToken}` } });
     console.log("✅ Retailer location set! Returned Lat/Lng:", 
       retLocRes.data.user.location.lat, retLocRes.data.user.location.lng);
 
     console.log("5. Querying nearby retailers for customer (should find Test Retailer)...");
-    const nearbyRetRes = await axios.get(`${API_URL}/users/retailers?lat=28.6304&lng=77.2177`);
+    const nearbyRetRes = await axios.get(`${API_URL}/users/retailers?lat=28.6304&lng=77.2177`, { headers: { Authorization: `Bearer ${customerToken}` } });
     const foundRetailer = nearbyRetRes.data.find(r => r.id === retailerId);
     if (foundRetailer) {
        console.log(`✅ Success! Customer can see the retailer on the map. Distance is close enough.`);
@@ -75,7 +75,7 @@ async function runTests() {
     }
 
     console.log("6. Querying nearby customers for retailer (should find Test Customer)...");
-    const nearbyCustRes = await axios.get(`${API_URL}/users/customers?lat=28.6310&lng=77.2180`);
+    const nearbyCustRes = await axios.get(`${API_URL}/users/customers?lat=28.6310&lng=77.2180`, { headers: { Authorization: `Bearer ${retailerToken}` } });
     const foundCustomer = nearbyCustRes.data.find(c => c.id === customerId);
     if (foundCustomer) {
        console.log(`✅ Success! Retailer can see the customer on the map.`);
@@ -88,11 +88,11 @@ async function runTests() {
     const followRes = await axios.post(`${API_URL}/users/follow`, {
       customerId: customerId,
       retailerId: retailerId
-    });
+    }, { headers: { Authorization: `Bearer ${customerToken}` } });
     console.log(`✅ Customer followed retailer: ${followRes.data.msg}`);
 
     // Verify customer's profile is updated
-    const customerProfile = await axios.get(`${API_URL}/users/${customerId}`);
+    const customerProfile = await axios.get(`${API_URL}/users/${customerId}`, { headers: { Authorization: `Bearer ${customerToken}` } });
     if (customerProfile.data.followedRetailers.includes(retailerId)) {
       console.log("✅ Verified: Retailer ID is in customer's followedRetailers array.");
     } else {
@@ -103,7 +103,7 @@ async function runTests() {
     const unfollowRes = await axios.post(`${API_URL}/users/unfollow`, {
       customerId: customerId,
       retailerId: retailerId
-    });
+    }, { headers: { Authorization: `Bearer ${customerToken}` } });
     console.log(`✅ Customer unfollowed retailer: ${unfollowRes.data.msg}`);
 
     console.log("\nAll API flows, geospatial queries, and follow functionalities passed successfully!");

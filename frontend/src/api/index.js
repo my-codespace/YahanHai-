@@ -1,5 +1,17 @@
 const API_URL = "http://localhost:5000/api";
 
+function getAuthHeaders(includeContentType = true) {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export async function registerUser(formData) {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
@@ -18,23 +30,31 @@ export async function loginUser(data) {
 }
 
 export async function getNearbyRetailers(lat, lng) {
-  const res = await fetch(`${API_URL}/users/retailers?lat=${lat}&lng=${lng}`);
+  const res = await fetch(`${API_URL}/users/retailers?lat=${lat}&lng=${lng}`, {
+    headers: getAuthHeaders(false)
+  });
   return res.json();
 }
 
 export async function getNearbyCustomers(lat, lng) {
-  const res = await fetch(`${API_URL}/users/customers?lat=${lat}&lng=${lng}`);
+  const res = await fetch(`${API_URL}/users/customers?lat=${lat}&lng=${lng}`, {
+    headers: getAuthHeaders(false)
+  });
   return res.json();
 }
 
 export async function getInterestedCustomers(retailerId) {
-  const res = await fetch(`${API_URL}/users/interested-customers?retailerId=${retailerId}`);
+  const res = await fetch(`${API_URL}/users/interested-customers?retailerId=${retailerId}`, {
+    headers: getAuthHeaders(false)
+  });
   if (!res.ok) throw new Error(`Failed to fetch interested customers: ${res.statusText}`);
   return res.json();
 }
 
 export async function getUserProfile(userId) {
-  const res = await fetch(`${API_URL}/users/${userId}`);
+  const res = await fetch(`${API_URL}/users/${userId}`, {
+    headers: getAuthHeaders(false)
+  });
   if (!res.ok) throw new Error("Failed to load profile");
   return res.json();
 }
@@ -42,7 +62,7 @@ export async function getUserProfile(userId) {
 export async function updateUserProfile(userId, data) {
   const res = await fetch(`${API_URL}/users/${userId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(true),
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to save profile");
@@ -52,7 +72,7 @@ export async function updateUserProfile(userId, data) {
 export async function followRetailer(customerId, retailerId) {
   const res = await fetch(`${API_URL}/users/follow`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(true),
     body: JSON.stringify({ customerId, retailerId }),
   });
   return res.json();
@@ -61,7 +81,7 @@ export async function followRetailer(customerId, retailerId) {
 export async function unfollowRetailer(customerId, retailerId) {
   const res = await fetch(`${API_URL}/users/unfollow`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(true),
     body: JSON.stringify({ customerId, retailerId }),
   });
   if (!res.ok) throw new Error('Failed to unfollow retailer');
@@ -69,14 +89,16 @@ export async function unfollowRetailer(customerId, retailerId) {
 }
 
 export async function getAllOnlineUsers(role) {
-  const res = await fetch(`${API_URL}/users/online?role=${role}`);
+  const res = await fetch(`${API_URL}/users/online?role=${role}`, {
+    headers: getAuthHeaders(false)
+  });
   return res.json();
 }
 
 export async function updateUserLocation(userId, lat, lng) {
   const res = await fetch(`${API_URL}/users/update-location`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(true),
     body: JSON.stringify({ userId, lat, lng }),
   });
   return res.json();

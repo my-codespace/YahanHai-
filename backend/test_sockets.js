@@ -73,10 +73,10 @@ async function runTests() {
     });
 
     console.log("4. Updating Customer Location...");
-    await axios.post(`${API_URL}/users/update-location`, { userId: customerId, lat: 28.6, lng: 77.2 });
+    await axios.post(`${API_URL}/users/update-location`, { userId: customerId, lat: 28.6, lng: 77.2 }, { headers: { Authorization: `Bearer ${custRes.data.token}` } });
 
     console.log("5. Updating Retailer Location...");
-    await axios.post(`${API_URL}/users/update-location`, { userId: retailerId, lat: 28.7, lng: 77.3 });
+    await axios.post(`${API_URL}/users/update-location`, { userId: retailerId, lat: 28.7, lng: 77.3 }, { headers: { Authorization: `Bearer ${retRes.data.token}` } });
 
     // Wait for sockets to receive events
     await delay(2000);

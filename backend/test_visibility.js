@@ -34,7 +34,7 @@ async function runTests() {
     const followerId = cust1Res.data.user._id;
 
     // Follow retailer
-    await axios.post(`${API_URL}/users/follow`, { customerId: followerId, retailerId });
+    await axios.post(`${API_URL}/users/follow`, { customerId: followerId, retailerId }, { headers: { Authorization: `Bearer ${cust1Res.data.token}` } });
 
     // 3. Register Customer 2 (Non-Follower)
     const cust2Form = new FormData();
@@ -49,9 +49,9 @@ async function runTests() {
     const nonFollowerId = cust2Res.data.user._id;
 
     // Set locations
-    await axios.post(`${API_URL}/users/update-location`, { userId: retailerId, lat: 28.0000, lng: 77.0000 });
-    await axios.post(`${API_URL}/users/update-location`, { userId: followerId, lat: 28.0010, lng: 77.0010 });
-    await axios.post(`${API_URL}/users/update-location`, { userId: nonFollowerId, lat: 28.0020, lng: 77.0020 });
+    await axios.post(`${API_URL}/users/update-location`, { userId: retailerId, lat: 28.0000, lng: 77.0000 }, { headers: { Authorization: `Bearer ${retRes.data.token}` } });
+    await axios.post(`${API_URL}/users/update-location`, { userId: followerId, lat: 28.0010, lng: 77.0010 }, { headers: { Authorization: `Bearer ${cust1Res.data.token}` } });
+    await axios.post(`${API_URL}/users/update-location`, { userId: nonFollowerId, lat: 28.0020, lng: 77.0020 }, { headers: { Authorization: `Bearer ${cust2Res.data.token}` } });
 
     // Connect Retailer
     const retSocket = io(SOCKET_URL, { query: { userId: retailerId } });
@@ -84,7 +84,7 @@ async function runTests() {
     await delay(1000);
     
     // Test API
-    const apiRes = await axios.get(`${API_URL}/users/customers?lat=28.0&lng=77.0&retailerId=${retailerId}`);
+    const apiRes = await axios.get(`${API_URL}/users/customers?lat=28.0&lng=77.0&retailerId=${retailerId}`, { headers: { Authorization: `Bearer ${retRes.data.token}` } });
     const apiCustomers = apiRes.data;
     
     const followerInApi = apiCustomers.find(u => u.id === followerId);

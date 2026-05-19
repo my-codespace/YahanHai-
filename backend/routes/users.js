@@ -1,6 +1,10 @@
 const express = require('express');
 const userController = require('../controllers/userController');
+const auth = require('../middleware/auth');
 const router = express.Router();
+
+// Apply auth middleware to all user routes
+router.use(auth);
 
 // --- Place all specific routes BEFORE parameterized routes ---
 
