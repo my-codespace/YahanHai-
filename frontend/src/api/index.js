@@ -103,3 +103,20 @@ export async function updateUserLocation(userId, lat, lng) {
   });
   return res.json();
 }
+
+export async function getNotifications() {
+  const res = await fetch(`${API_URL}/notifications`, {
+    headers: getAuthHeaders(false)
+  });
+  if (!res.ok) throw new Error("Failed to load notifications");
+  return res.json();
+}
+
+export async function markNotificationAsRead(notificationId) {
+  const res = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
+    method: "PUT",
+    headers: getAuthHeaders(true)
+  });
+  if (!res.ok) throw new Error("Failed to mark notification as read");
+  return res.json();
+}
