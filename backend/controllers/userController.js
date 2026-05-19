@@ -131,11 +131,11 @@ exports.getNearbyRetailers = async (req, res) => {
 };
 
 exports.getNearbyCustomers = async (req, res) => {
-  const { lat, lng, radius = 2000 } = req.query;
+  const { lat, lng, radius = 2000, retailerId } = req.query;
   if (!lat || !lng) return res.status(400).json({ msg: 'Missing coordinates' });
 
   try {
-    const customers = await User.find({
+    const query = {
       role: 'customer',
       location: {
         $near: {
@@ -143,7 +143,16 @@ exports.getNearbyCustomers = async (req, res) => {
           $maxDistance: Number(radius)
         }
       }
-    }).select('-password');
+    };
+    
+    if (retailerId) {
+      query.$or = [
+        { isOnline: true },
+        { followedRetailers: new mongoose.Types.ObjectId(retailerId) }
+      ];
+    }
+
+    const customers = await User.find(query).select('-password');
 
     res.json(customers.map(c => {
       const doc = c.toJSON();

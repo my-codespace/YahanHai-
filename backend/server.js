@@ -69,26 +69,28 @@ io.on('connection', (socket) => {
         isOnline: true,
         lastSeen: null
       }).exec().then(async () => {
-        const user = await User.findById(userId);
-        if (user && user.role === 'retailer') {
-          // Find all customers who follow this retailer
-          User.find({ followedRetailers: userId })
-            .select('_id')
-            .then(customers => {
-              customers.forEach(customer => {
-                // Target only the specific sockets for this customer
-                const customerSockets = userConnections.get(customer._id.toString());
-                if (customerSockets) {
-                  customerSockets.forEach(socketId => {
-                    io.to(socketId).emit('retailer-online', { retailerId: userId, retailerName: user.name });
-                  });
-                }
-              });
-            })
-            .catch(err => console.error('Error finding followers:', err));
+        const user = await User.findById(userId).select('-password');
+        if (user) {
+          if (user.role === 'retailer') {
+            // Find all customers who follow this retailer
+            User.find({ followedRetailers: userId })
+              .select('_id')
+              .then(customers => {
+                customers.forEach(customer => {
+                  // Target only the specific sockets for this customer
+                  const customerSockets = userConnections.get(customer._id.toString());
+                  if (customerSockets) {
+                    customerSockets.forEach(socketId => {
+                      io.to(socketId).emit('retailer-online', { retailerId: userId, retailerName: user.name });
+                    });
+                  }
+                });
+              })
+              .catch(err => console.error('Error finding followers:', err));
+          }
+          io.emit('user-status-changed', { userId, isOnline: true, user: user.toObject() });
         }
       });
-      io.emit('user-status-changed', { userId, isOnline: true });
     }
 
     // Heartbeat handler (updates lastSeen but keeps user online)
@@ -111,8 +113,8 @@ io.on('connection', (socket) => {
   socket.on('manual-status-change', async (isOnline) => {
     if (userId) {
       try {
-        await User.findByIdAndUpdate(userId, { isOnline, lastSeen: new Date() }).exec();
-        io.emit('user-status-changed', { userId, isOnline });
+        const user = await User.findByIdAndUpdate(userId, { isOnline, lastSeen: new Date() }, { new: true }).select('-password').exec();
+        io.emit('user-status-changed', { userId, isOnline, user: user ? user.toObject() : null });
       } catch (err) {
         console.error('Status update failed:', err);
       }
@@ -146,7 +148,12 @@ io.on('connection', (socket) => {
             ...c.toObject(),
             isOnline: userConnections.has(c._id.toString())
           }));
-          socket.emit('active-users', customersWithStatus);
+          const visibleCustomers = customersWithStatus.filter(c => {
+            if (c.isOnline) return true;
+            if (c.followedRetailers && c.followedRetailers.some(id => id.toString() === userId)) return true;
+            return false;
+          });
+          socket.emit('active-users', visibleCustomers);
         })
         .catch(err => console.error('Error fetching customers:', err));
     }
@@ -187,11 +194,15 @@ io.on('connection', (socket) => {
 
       if (userConnections.get(userId)?.size === 0) {
         userConnections.delete(userId);
-        await User.findByIdAndUpdate(userId, {
-          isOnline: false,
-          lastSeen: new Date()
-        }).exec();
-        io.emit('user-status-changed', { userId, isOnline: false });
+        try {
+          const user = await User.findByIdAndUpdate(userId, {
+            isOnline: false,
+            lastSeen: new Date()
+          }, { new: true }).select('-password').exec();
+          io.emit('user-status-changed', { userId, isOnline: false, user: user ? user.toObject() : null });
+        } catch (err) {
+          console.error('Disconnect update failed:', err);
+        }
       }
     }
   });

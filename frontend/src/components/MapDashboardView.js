@@ -81,12 +81,29 @@ function MapDashboardView({ user, setUser }) {
       setOnlineUsers(initialOnline);
     });
 
-    socketRef.current.on('user-status-changed', ({ userId, isOnline }) => {
+    socketRef.current.on('user-status-changed', ({ userId, isOnline, user: eventUser }) => {
       setOnlineUsers(prev => {
         const newSet = new Set(prev);
         isOnline ? newSet.add(userId) : newSet.delete(userId);
         return newSet;
       });
+
+      if (isOnline && eventUser && eventUser.location && eventUser.location.lat) {
+        if (eventUser.role !== user.role) {
+          setUsers(prev => {
+            const exists = prev.find(u => u?._id === userId);
+            if (exists) {
+              return prev.map(u => u?._id === userId ? { ...eventUser, isOnline: true } : u);
+            }
+            return [...prev, { ...eventUser, isOnline: true }];
+          });
+        }
+      } else if (!isOnline && eventUser && eventUser.role === 'customer' && user.role === 'retailer') {
+        const followsMe = eventUser.followedRetailers && eventUser.followedRetailers.some(id => id.toString() === user._id);
+        if (!followsMe) {
+          setUsers(prev => prev.filter(u => u?._id !== userId));
+        }
+      }
     });
 
     socketRef.current.on('location-update', (updatedUser) => {
