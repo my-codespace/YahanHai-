@@ -22,8 +22,8 @@ function DashboardLayout({ user, onLogout }) {
 
   const navItems = [
     { label: 'Map', icon: <FiMap />, path: '/dashboard/map' },
-    { label: 'Notifications', icon: <FiBell />, path: '/dashboard/notifications' },
-    { label: user.role === 'retailer' ? 'Customers' : 'Retailers', icon: <FiUsers />, path: '/dashboard/interested-customers' },
+    ...(user?.role !== 'retailer' ? [{ label: 'Notifications', icon: <FiBell />, path: '/dashboard/notifications' }] : []),
+    { label: user?.role === 'retailer' ? 'Customers' : 'Retailers', icon: <FiUsers />, path: '/dashboard/interested-customers' },
     { label: 'Profile', icon: <FiUser />, path: '/dashboard/edit-profile' },
   ];
 
@@ -42,7 +42,7 @@ function DashboardLayout({ user, onLogout }) {
 
   return (
     <Box sx={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-      
+
       {/* The Outlet renders the MapDashboardView which contains the full-bleed map */}
       <Box sx={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
         <Outlet />
@@ -80,13 +80,13 @@ function DashboardLayout({ user, onLogout }) {
             </NavLink>
           </Tooltip>
         ))}
-        
+
         {/* Logout Button */}
         <Tooltip title="Logout" placement={isMobile ? 'top' : 'right'}>
-          <IconButton 
-            onClick={handleLogout} 
-            sx={{ 
-              color: '#d32f2f', 
+          <IconButton
+            onClick={handleLogout}
+            sx={{
+              color: '#d32f2f',
               padding: '10px',
               transition: 'all 0.3s ease',
               '&:hover': { background: 'rgba(211, 47, 47, 0.1)' }
