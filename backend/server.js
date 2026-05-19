@@ -13,17 +13,18 @@ const authRoutes = require('./routes/auth');
 connectDB();
 
 const app = express();
-app.use(cors());
+const corsOptions = {
+  origin: process.env.CLIENT_URL || '*', // Use specific origin in production
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Attach Socket.IO to the HTTP server
 const server = http.createServer(app);
 const io = socketIo(server, {
-  cors: {
-    origin: '*', // For development; restrict in production
-    methods: ['GET', 'POST'],
-  },
+  cors: corsOptions,
 });
 
 // Make io accessible in routes via req.io
@@ -49,6 +50,7 @@ app.use((err, req, res, next) => {
 
 // --- Socket.IO real-time logic with heartbeat and multi-device support ---
 const userConnections = new Map(); // userId → Set of socket IDs
+const lastHeartbeat = new Map(); // userId → timestamp (for throttling DB writes)
 
 io.on('connection', (socket) => {
   const userId = socket.handshake.query.userId;
@@ -67,38 +69,65 @@ io.on('connection', (socket) => {
         isOnline: true,
         lastSeen: null
       }).exec().then(async () => {
-        const user = await User.findById(userId);
-        if (user.role === 'retailer') {
-          // Find all customers who follow this retailer
-          User.find({ followedRetailers: userId })
-            .select('_id')
-            .then(customers => {
-              customers.forEach(customer => {
-                // Emit to all sockets; in production, target only relevant sockets
-                io.emit('retailer-online', { retailerId: userId, retailerName: user.name });
-              });
-            })
-            .catch(err => console.error('Error finding followers:', err));
+        const user = await User.findById(userId).select('-password');
+        if (user) {
+          if (user.role === 'retailer') {
+            // Find all customers who follow this retailer
+            User.find({ followedRetailers: userId })
+              .select('_id')
+              .then(customers => {
+                customers.forEach(customer => {
+                  // Target only the specific sockets for this customer
+                  const customerSockets = userConnections.get(customer._id.toString());
+                  if (customerSockets) {
+                    customerSockets.forEach(socketId => {
+                      io.to(socketId).emit('retailer-online', { retailerId: userId, retailerName: user.name });
+                    });
+                  }
+                });
+              })
+              .catch(err => console.error('Error finding followers:', err));
+          }
+          io.emit('user-status-changed', { userId, isOnline: true, user: user.toObject() });
         }
       });
-      io.emit('user-status-changed', { userId, isOnline: true });
     }
 
     // Heartbeat handler (updates lastSeen but keeps user online)
     socket.on('heartbeat', async () => {
-      await User.findByIdAndUpdate(userId, {
-        lastSeen: new Date()
-      }).exec();
+      const now = Date.now();
+      const last = lastHeartbeat.get(userId) || 0;
+      // Throttle DB updates to once every 60 seconds per user
+      if (now - last > 60000) {
+        lastHeartbeat.set(userId, now);
+        try {
+          await User.findByIdAndUpdate(userId, { lastSeen: new Date() }).exec();
+        } catch (err) {
+          console.error('Heartbeat update failed:', err);
+        }
+      }
     });
   }
+
+  // Handle manual status toggles from the frontend
+  socket.on('manual-status-change', async (isOnline) => {
+    if (userId) {
+      try {
+        const user = await User.findByIdAndUpdate(userId, { isOnline, lastSeen: new Date() }, { new: true }).select('-password').exec();
+        io.emit('user-status-changed', { userId, isOnline, user: user ? user.toObject() : null });
+      } catch (err) {
+        console.error('Status update failed:', err);
+      }
+    }
+  });
 
   // Join room and send active users with online status
   socket.on('join-room', (userRole) => {
     if (userRole === 'customer') {
+      socket.join('customers');
       User.find({
         role: 'retailer',
-        "location.lat": { $exists: true, $ne: null },
-        "location.lng": { $exists: true, $ne: null }
+        "location.coordinates": { $exists: true, $type: "array", $not: { $size: 0 } }
       }).select('-password')
         .then(retailers => {
           const retailersWithStatus = retailers.map(r => ({
@@ -109,17 +138,22 @@ io.on('connection', (socket) => {
         })
         .catch(err => console.error('Error fetching retailers:', err));
     } else if (userRole === 'retailer') {
+      socket.join('retailers');
       User.find({
         role: 'customer',
-        "location.lat": { $exists: true, $ne: null },
-        "location.lng": { $exists: true, $ne: null }
+        "location.coordinates": { $exists: true, $type: "array", $not: { $size: 0 } }
       }).select('-password')
         .then(customers => {
           const customersWithStatus = customers.map(c => ({
             ...c.toObject(),
             isOnline: userConnections.has(c._id.toString())
           }));
-          socket.emit('active-users', customersWithStatus);
+          const visibleCustomers = customersWithStatus.filter(c => {
+            if (c.isOnline) return true;
+            if (c.followedRetailers && c.followedRetailers.some(id => id.toString() === userId)) return true;
+            return false;
+          });
+          socket.emit('active-users', visibleCustomers);
         })
         .catch(err => console.error('Error fetching customers:', err));
     }
@@ -160,11 +194,15 @@ io.on('connection', (socket) => {
 
       if (userConnections.get(userId)?.size === 0) {
         userConnections.delete(userId);
-        await User.findByIdAndUpdate(userId, {
-          isOnline: false,
-          lastSeen: new Date()
-        }).exec();
-        io.emit('user-status-changed', { userId, isOnline: false });
+        try {
+          const user = await User.findByIdAndUpdate(userId, {
+            isOnline: false,
+            lastSeen: new Date()
+          }, { new: true }).select('-password').exec();
+          io.emit('user-status-changed', { userId, isOnline: false, user: user ? user.toObject() : null });
+        } catch (err) {
+          console.error('Disconnect update failed:', err);
+        }
       }
     }
   });

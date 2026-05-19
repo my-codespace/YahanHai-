@@ -72,7 +72,8 @@ function AppWrapper() {
   useEffect(() => {
     if (!user?._id) return;
 
-    const socket = io('http://localhost:5000', {
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+    const socket = io(socketUrl, {
       query: { userId: user._id }
     });
 
@@ -108,7 +109,7 @@ function AppWrapper() {
           )
         }
       >
-        <Route path="map" element={<MapDashboardView user={user} />} />
+        <Route path="map" element={<MapDashboardView user={user} setUser={setUser} />} />
         <Route path="retailer/:id" element={<RetailerProfile user={user} setUser={setUser} />} />
         <Route path="analytics" element={<AnalyticsView />} />
         <Route path="notifications" element={<NotificationsView />} />
