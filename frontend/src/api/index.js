@@ -51,6 +51,14 @@ export async function getInterestedCustomers(retailerId) {
   return res.json();
 }
 
+export async function getFollowedRetailers(customerId) {
+  const res = await fetch(`${API_URL}/users/followed-retailers?customerId=${customerId}`, {
+    headers: getAuthHeaders(false)
+  });
+  if (!res.ok) throw new Error(`Failed to fetch followed retailers: ${res.statusText}`);
+  return res.json();
+}
+
 export async function getUserProfile(userId) {
   const res = await fetch(`${API_URL}/users/${userId}`, {
     headers: getAuthHeaders(false)

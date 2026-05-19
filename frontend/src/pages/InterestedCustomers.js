@@ -1,87 +1,94 @@
 import React, { useState, useEffect } from 'react';
-import { getInterestedCustomers } from '../api/index.js';
+import { getInterestedCustomers, getFollowedRetailers } from '../api/index.js';
 import { Link } from 'react-router-dom';
 
 function InterestedCustomers({ user }) {
-  const [customers, setCustomers] = useState([]);
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (user?.role === 'retailer') {
       getInterestedCustomers(user._id)
         .then(data => {
-          setCustomers(data);
+          setList(data || []);
           setError(null);
         })
         .catch(err => {
           setError(err.message);
-          setCustomers([]);
-        });
+          setList([]);
+        })
+        .finally(() => setLoading(false));
+    } else if (user?.role === 'customer') {
+      getFollowedRetailers(user._id)
+        .then(data => {
+          setList(data || []);
+          setError(null);
+        })
+        .catch(err => {
+          setError(err.message);
+          setList([]);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-  }, [user?._id]);
+  }, [user?._id, user?.role]);
 
-  if (user?.role !== 'retailer') return <div style={{ padding: 24, textAlign: 'center', color: '#d32f2f' }}>Not authorized</div>;
+  const isRetailer = user?.role === 'retailer';
+  const title = isRetailer ? 'Interested Customers' : 'Followed Retailers';
+  const emptyText = isRetailer ? 'No customers have followed you yet.' : 'You are not following any retailers yet.';
+
+  const getProfilePic = (person) => {
+    if (person.profilePic) return `http://localhost:5000/${person.profilePic}`;
+    if (person.retailerPhoto) return `http://localhost:5000/${person.retailerPhoto}`;
+    if (person.businessLogo) return `http://localhost:5000/${person.businessLogo}`;
+    return '/default-avatar.png'; // Fallback
+  };
 
   return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: '32px auto 0 auto',
-        background: '#fff',
-        borderRadius: 16,
-        boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
-        padding: '36px 48px',
-        minHeight: 400,
-      }}
-    >
-      <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: 32, letterSpacing: -1 }}>
-        Interested Customers
-      </h1>
-      {error && <div style={{ color: '#d32f2f', marginBottom: 18, fontWeight: 500 }}>{error}</div>}
-      {customers.length === 0 && !error && (
-        <div style={{ color: '#757575', fontStyle: 'italic', marginBottom: 20, textAlign: 'center' }}>
-          No customers have followed you yet.
+    <div className="main-container">
+      <h1 className="page-title">{title}</h1>
+      
+      {error && <div className="error-msg">{error}</div>}
+      
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
+      ) : list.length === 0 && !error ? (
+        <div className="empty-msg">{emptyText}</div>
+      ) : (
+        <div className="customer-list">
+          {list.map(person => (
+            <Link
+              key={person.id}
+              to={`/dashboard/${isRetailer ? 'profile' : 'retailer'}/${person.id}`}
+              className="customer-card-link"
+            >
+              <div className="customer-card">
+                <img
+                  src={getProfilePic(person)}
+                  alt={person.name}
+                  className="customer-avatar"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/default-avatar.png';
+                  }}
+                />
+                <div className="customer-info">
+                  <div className="customer-name">{person.shopName || person.name}</div>
+                  <div className="customer-city">{person.city || 'City not set'}</div>
+                  <div className="customer-interest">
+                    {isRetailer 
+                      ? `Interest: ${person.interest || 'Not specified'}`
+                      : `Category: ${person.businessCategory || 'Not specified'}`
+                    }
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {Array.isArray(customers) && customers.map(customer => (
-          <Link
-            key={customer.id}
-            to={`/dashboard/profile/${customer.id}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              textDecoration: 'none',
-              background: '#f9f9f9',
-              borderRadius: 8,
-              padding: '18px 24px',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-              color: '#222',
-              transition: 'background 0.2s',
-            }}
-          >
-            <img
-              src={user?.profilePic ? `http://localhost:5000/${user.profilePic}` : '/default-avatar.png'}
-              alt={customer.name}
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                marginRight: 24,
-                background: '#e0e0e0',
-              }}
-            />
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 18 }}>{customer.name}</div>
-              <div style={{ color: '#1976d2', fontSize: 15 }}>{customer.city || 'City not set'}</div>
-              <div style={{ color: '#888', fontSize: 13 }}>
-                Interest: {customer.interest || 'Not specified'}
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }

@@ -1,12 +1,42 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { Box, useMediaQuery, useTheme, Tooltip, IconButton } from '@mui/material';
+import { Box, useMediaQuery, useTheme, Tooltip, IconButton, Badge } from '@mui/material';
 import { FiMap, FiBell, FiUsers, FiUser, FiLogOut } from 'react-icons/fi';
+import { getNotifications } from '../api/index';
 
 function DashboardLayout({ user, onLogout }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.role !== 'retailer') {
+      getNotifications().then(data => {
+        setUnreadCount(data.filter(n => !n.isRead).length);
+      }).catch(console.error);
+    }
+  }, [user?.role]);
+
+  useEffect(() => {
+    if (!user?._id) return;
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+    const socket = io(socketUrl, { query: { userId: user._id } });
+    
+    socket.on('proximity_alert', () => {
+      setUnreadCount(prev => prev + 1);
+    });
+
+    const handleNotificationRead = () => {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    };
+    window.addEventListener('notification-read', handleNotificationRead);
+
+    return () => {
+      socket.disconnect();
+      window.removeEventListener('notification-read', handleNotificationRead);
+    };
+  }, [user?._id]);
 
   const handleLogout = () => {
     const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
@@ -22,7 +52,15 @@ function DashboardLayout({ user, onLogout }) {
 
   const navItems = [
     { label: 'Map', icon: <FiMap />, path: '/dashboard/map' },
-    ...(user?.role !== 'retailer' ? [{ label: 'Notifications', icon: <FiBell />, path: '/dashboard/notifications' }] : []),
+    ...(user?.role !== 'retailer' ? [{ 
+      label: 'Notifications', 
+      icon: (
+        <Badge badgeContent={unreadCount} color="error" overlap="circular" sx={{ '& .MuiBadge-badge': { fontWeight: 'bold' } }}>
+          <FiBell />
+        </Badge>
+      ), 
+      path: '/dashboard/notifications' 
+    }] : []),
     { label: user?.role === 'retailer' ? 'Customers' : 'Retailers', icon: <FiUsers />, path: '/dashboard/interested-customers' },
     { label: 'Profile', icon: <FiUser />, path: '/dashboard/edit-profile' },
   ];

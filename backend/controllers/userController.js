@@ -40,6 +40,42 @@ exports.getInterestedCustomers = async (req, res) => {
   }
 };
 
+exports.getFollowedRetailers = async (req, res) => {
+  const { customerId } = req.query;
+  if (!customerId) return res.status(400).json({ msg: 'Missing customerId' });
+  if (!mongoose.Types.ObjectId.isValid(customerId)) {
+    return res.status(400).json({ msg: 'Invalid customerId' });
+  }
+
+  try {
+    const customer = await User.findById(customerId).populate('followedRetailers', '-password');
+    if (!customer) return res.status(404).json({ msg: 'Customer not found' });
+    
+    res.json(customer.followedRetailers.map(r => {
+      const doc = r.toJSON ? r.toJSON() : r;
+      return {
+        id: doc._id,
+        name: doc.name,
+        shopName: doc.shopName,
+        profilePic: doc.profilePic,
+        businessCategory: doc.businessCategory,
+        businessDescription: doc.businessDescription,
+        businessLogo: doc.businessLogo,
+        retailerPhoto: doc.retailerPhoto,
+        operatingHours: doc.operatingHours,
+        deliveryAvailable: doc.deliveryAvailable,
+        phone: doc.phone,
+        city: doc.city,
+        lat: doc.location?.coordinates?.[1],
+        lng: doc.location?.coordinates?.[0],
+      };
+    }));
+  } catch (err) {
+    console.error('Error in getFollowedRetailers:', err.message);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+};
+
 exports.unfollowRetailer = async (req, res) => {
   const { customerId, retailerId } = req.body;
   if (!customerId || !retailerId) return res.status(400).json({ msg: 'Missing data' });

@@ -47,6 +47,7 @@ function NotificationsView() {
         setNotifications(notifications.map(n => 
           n._id === notification._id ? { ...n, isRead: true } : n
         ));
+        window.dispatchEvent(new Event('notification-read'));
       } catch (error) {
         console.error('Failed to mark as read', error);
       }

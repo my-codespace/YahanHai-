@@ -14,6 +14,9 @@ router.get('/with-status', userController.getUsersWithStatus);
 // Get interested customers for a retailer
 router.get('/interested-customers', userController.getInterestedCustomers);
 
+// Get followed retailers for a customer
+router.get('/followed-retailers', userController.getFollowedRetailers);
+
 // Unfollow a retailer
 router.post('/unfollow', userController.unfollowRetailer);
 
