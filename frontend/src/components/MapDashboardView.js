@@ -90,7 +90,13 @@ function MapDashboardView({ user, setUser }) {
     });
 
     socketRef.current.on('location-update', (updatedUser) => {
-      setUsers(prev => prev.map(u => u?._id === updatedUser._id ? updatedUser : u));
+      setUsers(prev => {
+        const exists = prev.find(u => u?._id === updatedUser._id);
+        if (exists) {
+          return prev.map(u => u?._id === updatedUser._id ? updatedUser : u);
+        }
+        return [...prev, updatedUser];
+      });
     });
 
     socketRef.current.on('user-logged-out', (userId) => {

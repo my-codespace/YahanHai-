@@ -122,6 +122,7 @@ io.on('connection', (socket) => {
   // Join room and send active users with online status
   socket.on('join-room', (userRole) => {
     if (userRole === 'customer') {
+      socket.join('customers');
       User.find({
         role: 'retailer',
         "location.coordinates": { $exists: true, $type: "array", $not: { $size: 0 } }
@@ -135,6 +136,7 @@ io.on('connection', (socket) => {
         })
         .catch(err => console.error('Error fetching retailers:', err));
     } else if (userRole === 'retailer') {
+      socket.join('retailers');
       User.find({
         role: 'customer',
         "location.coordinates": { $exists: true, $type: "array", $not: { $size: 0 } }

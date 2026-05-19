@@ -61,7 +61,13 @@ exports.updateLocation = async (req, res) => {
       { location: { type: 'Point', coordinates: [Number(lng), Number(lat)] } },
       { new: true }
     ).select("-password");
-    if (req.io) req.io.emit("location-update", user);
+    if (req.io) {
+      if (user.role === 'customer') {
+        req.io.to('retailers').emit("location-update", user);
+      } else if (user.role === 'retailer') {
+        req.io.to('customers').emit("location-update", user);
+      }
+    }
     res.json({ msg: 'Location updated', user });
   } catch (err) {
     res.status(500).json({ msg: 'Server error' });
