@@ -51,7 +51,7 @@ function MapDashboardView({ user, setUser }) {
   );
   
   // Location Modes
-  const [mode, setMode] = useState("live");
+  const [mode, setMode] = useState(() => localStorage.getItem('locationMode') || "live");
   const [showPicker, setShowPicker] = useState(false);
 
   // Drawer state
@@ -59,7 +59,10 @@ function MapDashboardView({ user, setUser }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Status toggle
-  const [isOnlineStatus, setIsOnlineStatus] = useState(true);
+  const [isOnlineStatus, setIsOnlineStatus] = useState(() => {
+    const saved = localStorage.getItem('isOnlineStatus');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const socketRef = useRef(null);
 
   // --- Socket Logic ---
@@ -130,6 +133,7 @@ function MapDashboardView({ user, setUser }) {
   const handleStatusToggle = (e) => {
     const online = e.target.checked;
     setIsOnlineStatus(online);
+    localStorage.setItem('isOnlineStatus', JSON.stringify(online));
     if (socketRef.current) {
       socketRef.current.emit('manual-status-change', online);
     }
@@ -138,6 +142,9 @@ function MapDashboardView({ user, setUser }) {
   const handleLocationChange = (lat, lng) => {
     setLocation({ lat, lng });
     updateUserLocation(user._id, lat, lng);
+    if (setUser) {
+      setUser(prev => ({ ...prev, location: { lat, lng } }));
+    }
   };
 
   // --- Live Location Logic ---
@@ -314,6 +321,7 @@ function MapDashboardView({ user, setUser }) {
           onChange={(e, newMode) => {
             if (newMode !== null) {
               setMode(newMode);
+              localStorage.setItem('locationMode', newMode);
               if (newMode === 'manual') setShowPicker(true);
             }
           }}

@@ -9,6 +9,7 @@ const User = require('./models/User');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
+const notificationRoutes = require('./routes/notifications');
 
 connectDB();
 
@@ -36,6 +37,7 @@ app.use((req, res, next) => {
 // API routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Test Route
 app.get('/', (req, res) => {
@@ -62,6 +64,7 @@ io.on('connection', (socket) => {
       userConnections.set(userId, new Set());
     }
     userConnections.get(userId).add(socket.id);
+    socket.join(userId); // Join a specific room for this user
 
     // Mark online if first connection
     if (userConnections.get(userId).size === 1) {

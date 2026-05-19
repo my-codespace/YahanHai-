@@ -84,8 +84,16 @@ function AppWrapper() {
       });
     });
 
+    socket.on('proximity_alert', (notification) => {
+      toast.success(`📍 ${notification.message}`, {
+        position: "top-center",
+        autoClose: 8000,
+      });
+    });
+
     return () => {
       socket.off('retailer-online');
+      socket.off('proximity_alert');
       socket.disconnect();
     };
   }, [user?._id]);
