@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 exports.getUsersWithStatus = async (req, res) => {
   try {
@@ -66,6 +67,42 @@ exports.updateLocation = async (req, res) => {
         req.io.to('retailers').emit("location-update", user);
       } else if (user.role === 'retailer') {
         req.io.to('customers').emit("location-update", user);
+
+        // Proximity Alert Logic
+        const nearbyFollowers = await User.find({
+          role: 'customer',
+          followedRetailers: user._id,
+          location: {
+            $near: {
+              $geometry: { type: 'Point', coordinates: [Number(lng), Number(lat)] },
+              $maxDistance: 200 // 200 meters
+            }
+          }
+        });
+
+        const cooldownPeriod = 20 * 60 * 1000; // 20 minutes
+        const now = new Date();
+
+        for (const follower of nearbyFollowers) {
+          const lastNotification = await Notification.findOne({
+            recipient: follower._id,
+            sender: user._id,
+            type: 'proximity_alert'
+          }).sort({ createdAt: -1 });
+
+          if (!lastNotification || (now - lastNotification.createdAt) > cooldownPeriod) {
+            const notif = new Notification({
+              recipient: follower._id,
+              sender: user._id,
+              type: 'proximity_alert',
+              message: `${user.name || user.shopName} is within 200m of your location!`
+            });
+            await notif.save();
+
+            const populatedNotif = await notif.populate('sender', 'name shopName avatarUrl role');
+            req.io.to(follower._id.toString()).emit('proximity_alert', populatedNotif);
+          }
+        }
       }
     }
     res.json({ msg: 'Location updated', user });
