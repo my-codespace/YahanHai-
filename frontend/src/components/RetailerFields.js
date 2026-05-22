@@ -160,6 +160,19 @@ export default function RetailerFields({ form, handleChange, handleFileChange })
           required
         />
       </div>
+      <div style={{ marginBottom: 16 }}>
+        <label htmlFor="storefrontPhoto" style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
+          Storefront Photo (optional)
+        </label>
+        <input
+          id="storefrontPhoto"
+          name="storefrontPhoto"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          style={{ width: "100%" }}
+        />
+      </div>
     </>
   );
 }

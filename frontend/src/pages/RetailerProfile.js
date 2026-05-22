@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import MapPanel from '../components/MapPanel';
 import { getUserProfile, followRetailer, unfollowRetailer } from '../api/index';
+import formatOperatingHours from '../utils/formatOperatingHours';
 
 function RetailerProfile({ user, setUser }) {
   const { id: retailerId } = useParams();
@@ -30,13 +31,16 @@ function RetailerProfile({ user, setUser }) {
 
   // Socket.IO for real-time status updates
   useEffect(() => {
-    if (!retailer) return;
-    const socket = io('http://localhost:5000');
+    if (!retailerId) return;
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+    const socket = io(socketUrl);
     socket.on('user-status-changed', ({ userId, isOnline }) => {
-      if (userId === retailer._id) setRetailer(prev => ({ ...prev, isOnline }));
+      if (userId === retailerId) {
+        setRetailer(prev => prev ? { ...prev, isOnline } : null);
+      }
     });
     return () => socket.disconnect();
-  }, [retailer]);
+  }, [retailerId]);
 
   // Handle follow/unfollow
   const handleFollow = async () => {
@@ -94,7 +98,7 @@ function RetailerProfile({ user, setUser }) {
           )}
           <p><strong>Category:</strong> {retailer.businessCategory}</p>
           <p><strong>Description:</strong> {retailer.businessDescription}</p>
-          <p><strong>Hours:</strong> {retailer.operatingHours}</p>
+          <p><strong>Hours:</strong> {formatOperatingHours(retailer.operatingHours)}</p>
           <p><strong>Phone:</strong> {retailer.phone}</p>
           {user?.role === 'customer' && (
             <button

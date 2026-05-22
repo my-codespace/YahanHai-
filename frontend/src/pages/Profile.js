@@ -57,17 +57,21 @@ function Profile() {
             <span>{user.email || 'N/A'}</span>
           </div>
           <div className="profile-row">
-            <span className="profile-label">Location:</span>
-            <span>{user.city || 'N/A'}</span>
-          </div>
-          <div className="profile-row">
             <span className="profile-label">Phone:</span>
             <span>{user.phone || 'N/A'}</span>
           </div>
-          <div className="profile-row">
-            <span className="profile-label">Interest:</span>
-            <span>{user.interest || 'N/A'}</span>
-          </div>
+          {user.role === 'retailer' && (
+            <>
+              <div className="profile-row">
+                <span className="profile-label">Shop:</span>
+                <span>{user.shopName || 'N/A'}</span>
+              </div>
+              <div className="profile-row">
+                <span className="profile-label">Category:</span>
+                <span>{user.businessCategory || 'N/A'}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

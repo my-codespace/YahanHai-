@@ -33,7 +33,8 @@ const upload = multer({
 router.post('/register', upload.fields([
   { name: 'profilePic', maxCount: 1 },
   { name: 'businessLogo', maxCount: 1 },
-  { name: 'retailerPhoto', maxCount: 1 }
+  { name: 'retailerPhoto', maxCount: 1 },
+  { name: 'storefrontPhoto', maxCount: 1 }
 ]), authController.register);
 
 // Login Route

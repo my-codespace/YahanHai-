@@ -21,7 +21,12 @@ function DashboardLayout({ user, onLogout }) {
   useEffect(() => {
     if (!user?._id) return;
     const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
-    const socket = io(socketUrl, { query: { userId: user._id } });
+    const socket = io(socketUrl, { 
+      query: { 
+        userId: user._id,
+        isOnline: localStorage.getItem('isOnlineStatus') !== 'false'
+      } 
+    });
     
     socket.on('proximity_alert', () => {
       setUnreadCount(prev => prev + 1);

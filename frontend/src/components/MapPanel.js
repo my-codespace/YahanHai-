@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import createAvatarIcon from '../utils/createAvatarIcon';
+import formatOperatingHours from '../utils/formatOperatingHours';
 
 // Floating action button for "My Location"
 function MyLocationButton({ location }) {
@@ -99,7 +100,7 @@ export default function MapPanel({ location, markers, role, user }) {
                   {marker?.role && <div style={{ marginBottom: 4 }}>{marker.role.charAt(0).toUpperCase() + marker.role.slice(1)}</div>}
                   {marker?.email && <div style={{ marginBottom: 4 }}>{marker.email}</div>}
                   {marker?.businessCategory && <div style={{ marginBottom: 4 }}>Category: {marker.businessCategory}</div>}
-                  {marker?.operatingHours && <div style={{ marginBottom: 4 }}>Hours: {marker.operatingHours}</div>}
+                  {marker?.operatingHours && <div style={{ marginBottom: 4 }}>Hours: {formatOperatingHours(marker.operatingHours)}</div>}
                   {marker?.phone && <div style={{ marginBottom: 4 }}>📞 {marker.phone}</div>}
                   {marker?.role === 'retailer' && (
                     <button
