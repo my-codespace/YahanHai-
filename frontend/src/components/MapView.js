@@ -2,6 +2,7 @@ import React from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import formatOperatingHours from '../utils/formatOperatingHours';
 
 function createAvatarIcon(user) {
   return L.divIcon({
@@ -55,7 +56,7 @@ export default function MapView({ center, markers = [] }) {
                 <small>{m.isOnline ? 'Online now' : `Last seen ${m.lastSeen ? new Date(m.lastSeen).toLocaleString() : 'unknown'}`}</small>
               </div>
               {m.businessCategory && <p style={{ margin: 4 }}>Category: {m.businessCategory}</p>}
-              {m.operatingHours && <p style={{ margin: 4 }}>Hours: {m.operatingHours}</p>}
+              {m.operatingHours && <p style={{ margin: 4 }}>Hours: {formatOperatingHours(m.operatingHours)}</p>}
               {m.phone && <p style={{ margin: 4 }}>📞 {m.phone}</p>}
             </div>
           </Popup>

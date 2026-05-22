@@ -76,11 +76,10 @@ function InterestedCustomers({ user }) {
                 />
                 <div className="customer-info">
                   <div className="customer-name">{person.shopName || person.name}</div>
-                  <div className="customer-city">{person.city || 'City not set'}</div>
-                  <div className="customer-interest">
+                  <div className="customer-city">
                     {isRetailer 
-                      ? `Interest: ${person.interest || 'Not specified'}`
-                      : `Category: ${person.businessCategory || 'Not specified'}`
+                      ? 'Customer' 
+                      : person.businessCategory || 'Retailer'
                     }
                   </div>
                 </div>

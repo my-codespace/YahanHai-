@@ -18,6 +18,8 @@ async function runTests() {
     retForm.append('password', 'password123');
     retForm.append('phone', '0987654321');
     retForm.append('role', 'retailer');
+    retForm.append('shopName', 'Prox Shop');
+    retForm.append('businessCategory', 'Other');
     const retRes = await axios.post(`${API_URL}/auth/register`, retForm, { headers: retForm.getHeaders() });
     const retailerId = retRes.data.user._id;
     const retailerToken = retRes.data.token;
@@ -43,7 +45,10 @@ async function runTests() {
 
     // Connect Customer Socket
     const custSocket = io(SOCKET_URL, { query: { userId: followerId } });
-    await new Promise(res => custSocket.on('connect', res));
+    await new Promise(res => {
+      if (custSocket.connected) res();
+      else custSocket.on('connect', res);
+    });
     console.log("Customer Socket Connected");
 
     let proximityAlertReceived = 0;

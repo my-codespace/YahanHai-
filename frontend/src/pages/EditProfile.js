@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Message from '../components/Message';
 import Card from '../components/Card';
+import formatOperatingHours from '../utils/formatOperatingHours';
 
 function EditProfile({ user, setUser }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    city: '',
-    interest: '',
     shopName: '',
     businessCategory: '',
     businessDescription: '',
@@ -26,12 +25,10 @@ function EditProfile({ user, setUser }) {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        city: user.city || '',
-        interest: user.interest || '',
         shopName: user.shopName || '',
         businessCategory: user.businessCategory || '',
         businessDescription: user.businessDescription || '',
-        operatingHours: user.operatingHours || '',
+        operatingHours: formatOperatingHours(user.operatingHours),
         deliveryAvailable: user.deliveryAvailable || false,
       });
     }
@@ -104,31 +101,7 @@ function EditProfile({ user, setUser }) {
           />
         </div>
 
-        {/* Customer-Specific */}
-        {user?.role === 'customer' && (
-          <>
-            <div style={{ marginBottom: 16 }}>
-              <label>City</label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label>Interest</label>
-              <input
-                type="text"
-                name="interest"
-                value={formData.interest}
-                onChange={handleChange}
-                style={{ width: '100%', padding: 8, marginTop: 4, borderRadius: 6, border: '1px solid #ccc' }}
-              />
-            </div>
-          </>
-        )}
+        {/* Customer-Specific (Removed old fields) */}
 
         {/* Retailer-Specific */}
         {user?.role === 'retailer' && (

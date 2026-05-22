@@ -18,6 +18,8 @@ async function runTests() {
     retForm.append('password', 'password123');
     retForm.append('phone', '0987654321');
     retForm.append('role', 'retailer');
+    retForm.append('shopName', 'Vis Shop');
+    retForm.append('businessCategory', 'Other');
     const retRes = await axios.post(`${API_URL}/auth/register`, retForm, { headers: retForm.getHeaders() });
     const retailerId = retRes.data.user._id;
 
@@ -55,7 +57,10 @@ async function runTests() {
 
     // Connect Retailer
     const retSocket = io(SOCKET_URL, { query: { userId: retailerId } });
-    await new Promise(res => retSocket.on('connect', res));
+    await new Promise(res => {
+      if (retSocket.connected) res();
+      else retSocket.on('connect', res);
+    });
 
     // Listen for active users
     let activeUsers = [];
@@ -80,7 +85,10 @@ async function runTests() {
 
     // Connect Non-Follower
     const nonFollSocket = io(SOCKET_URL, { query: { userId: nonFollowerId } });
-    await new Promise(res => nonFollSocket.on('connect', res));
+    await new Promise(res => {
+      if (nonFollSocket.connected) res();
+      else nonFollSocket.on('connect', res);
+    });
     await delay(1000);
     
     // Test API

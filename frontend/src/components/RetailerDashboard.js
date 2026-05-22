@@ -33,7 +33,9 @@ export default function RetailerDashboard({ user, onLogout, searchTerm = "", fil
     const socket = io(socketUrl, {
       query: { userId: user._id }
     });
-    socket.emit('join-room', user.role); 
+    socket.on('connect', () => {
+      socket.emit('join-room', user.role); 
+    });
   
     // Start heartbeat: send 'heartbeat' every 5 seconds
     const heartbeatInterval = setInterval(() => {
@@ -51,19 +53,40 @@ export default function RetailerDashboard({ user, onLogout, searchTerm = "", fil
     });
   
     // Listen for real-time status changes
-    socket.on('user-status-changed', ({ userId, isOnline }) => {
+    socket.on('user-status-changed', ({ userId, isOnline, user: eventUser }) => {
       setOnlineUsers(prev => {
         const newSet = new Set(prev);
         isOnline ? newSet.add(userId) : newSet.delete(userId);
         return newSet;
       });
+
+      if (isOnline && eventUser && eventUser.location && eventUser.location.lat) {
+        if (eventUser.role !== user.role) {
+          setUsers(prev => {
+            const exists = prev.find(u => u?._id === userId);
+            if (exists) {
+              return prev.map(u => u?._id === userId ? { ...eventUser, isOnline: true } : u);
+            }
+            return [...prev, { ...eventUser, isOnline: true }];
+          });
+        }
+      } else if (!isOnline && eventUser && eventUser.role === 'customer' && user.role === 'retailer') {
+        const followsMe = eventUser.followedRetailers && eventUser.followedRetailers.some(id => id.toString() === user._id);
+        if (!followsMe) {
+          setUsers(prev => prev.filter(u => u?._id !== userId));
+        }
+      }
     });
   
     // Listen for location updates
     socket.on('location-update', (updatedUser) => {
-      setUsers(prev =>
-        prev.map(u => u._id === updatedUser._id ? updatedUser : u)
-      );
+      setUsers(prev => {
+        const exists = prev.find(u => u?._id === updatedUser._id);
+        if (exists) {
+          return prev.map(u => u?._id === updatedUser._id ? updatedUser : u);
+        }
+        return [...prev, updatedUser];
+      });
     });
   
     // Listen for user logout

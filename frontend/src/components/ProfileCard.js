@@ -52,11 +52,7 @@ export default function ProfileCard({ user }) {
       </div>
       <div style={{ marginTop: 20 }}>
         {user.role === 'customer' && (
-          <>
-            <div><b>City:</b> {user.city}</div>
-            <div><b>Interests:</b> {user.interest}</div>
-            <div><b>Date of Birth:</b> {user.dob ? new Date(user.dob).toLocaleDateString() : 'N/A'}</div>
-          </>
+          <div><i>Customer Profile</i></div>
         )}
         {user.role === 'retailer' && (
           <>

@@ -50,10 +50,7 @@ const initialForm = {
   phone: "",
   role: "customer",
   // Customer
-  interest: "",
   profilePic: null,
-  dob: "",
-  city: "",
   // Retailer
   shopName: "",
   businessCategory: "",
@@ -108,9 +105,6 @@ formData.append('role', form.role);
 
 // Customer fields
 if (form.role === 'customer') {
-  formData.append('interest', form.interest);
-  formData.append('dob', form.dob);
-  formData.append('city', form.city);
   if (form.profilePic) formData.append('profilePic', form.profilePic);
 }
 
@@ -124,6 +118,7 @@ if (form.role === 'retailer') {
   formData.append('deliveryAvailable', form.deliveryAvailable);
   if (form.businessLogo) formData.append('businessLogo', form.businessLogo);
   if (form.retailerPhoto) formData.append('retailerPhoto', form.retailerPhoto);
+  if (form.storefrontPhoto) formData.append('storefrontPhoto', form.storefrontPhoto);
 }
 
     const res = await registerUser(formData); // Your backend should handle multipart/form-data

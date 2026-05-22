@@ -1,12 +1,16 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const CustomerProfile = require('../models/CustomerProfile');
+const RetailerProfile = require('../models/RetailerProfile');
+const UserLocation = require('../models/UserLocation');
+const parseOperatingHours = require('../utils/parseOperatingHours');
 
 exports.register = async (req, res) => {
   try {
     const { 
       name, email, password, phone, role, 
-      // Customer fields
+      // Customer fields (we map what we can)
       interest, dob, city,
       // Retailer fields
       shopName, businessCategory, businessDescription, 
@@ -17,47 +21,54 @@ exports.register = async (req, res) => {
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ msg: 'User already exists' });
 
-    // Prepare user data
-    const userData = {
-      name, email, password, phone, role
-    };
-
-    // Add role-specific fields
-    if (role === 'customer') {
-      userData.interest = interest;
-      userData.dob = dob;
-      userData.city = city;
-      // Handle profile pic upload
-      if (req.files && req.files.profilePic) {
-        userData.profilePic = req.files.profilePic[0].path;
-      }
-    }
-
-    if (role === 'retailer') {
-      userData.shopName = shopName;
-      userData.businessCategory = businessCategory;
-      userData.businessDescription = businessDescription;
-      userData.gstin = gstin;
-      userData.operatingHours = operatingHours;
-      userData.deliveryAvailable = deliveryAvailable === 'true';
-      
-      // Handle file uploads
-      if (req.files && req.files.businessLogo) {
-        userData.businessLogo = req.files.businessLogo[0].path;
-      }
-      if (req.files && req.files.retailerPhoto) {
-        userData.retailerPhoto = req.files.retailerPhoto[0].path;
-      }
-    }
-
-    // Create user
-    user = new User(userData);
+    // Create user base
+    user = new User({ name, email, phone, role });
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
-
     await user.save();
+
+    // Create location entry
+    await UserLocation.create({ userId: user._id, role: user.role });
+
+    // Add role-specific profile
+    if (role === 'customer') {
+      const profileData = { userId: user._id };
+      if (req.files && req.files.profilePic) {
+        profileData.profilePic = req.files.profilePic[0].path;
+      }
+      // If city is provided, we can optionally save it as a saved address, but let's keep it simple
+      await CustomerProfile.create(profileData);
+    }
+
+    if (role === 'retailer') {
+      const profileData = {
+        userId: user._id,
+        shopName,
+        businessCategory: businessCategory || 'General',
+        businessDescription,
+        gstin,
+        deliveryAvailable: deliveryAvailable === 'true'
+      };
+      
+      if (operatingHours) {
+        profileData.operatingHours = parseOperatingHours(operatingHours);
+      }
+      
+      // Handle file uploads
+      if (req.files && req.files.businessLogo) {
+        profileData.businessLogo = req.files.businessLogo[0].path;
+      }
+      if (req.files && req.files.retailerPhoto) {
+        profileData.ownerPhoto = req.files.retailerPhoto[0].path;
+      }
+      if (req.files && req.files.storefrontPhoto) {
+        profileData.storefrontPhoto = req.files.storefrontPhoto[0].path;
+      }
+      
+      await RetailerProfile.create(profileData);
+    }
 
     // Create JWT token
     const payload = { userId: user.id, role: user.role };

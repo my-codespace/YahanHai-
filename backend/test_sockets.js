@@ -45,8 +45,14 @@ async function runTests() {
     const custSocket = io(SOCKET_URL, { query: { userId: customerId } });
     const retSocket = io(SOCKET_URL, { query: { userId: retailerId } });
 
-    await new Promise(res => custSocket.on('connect', res));
-    await new Promise(res => retSocket.on('connect', res));
+    await new Promise(res => {
+      if (custSocket.connected) res();
+      else custSocket.on('connect', res);
+    });
+    await new Promise(res => {
+      if (retSocket.connected) res();
+      else retSocket.on('connect', res);
+    });
     console.log("✅ Sockets connected");
 
     custSocket.emit('join-room', 'customer');

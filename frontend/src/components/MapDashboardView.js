@@ -4,7 +4,7 @@ import { FiSearch, FiX, FiNavigation, FiMapPin, FiCrosshair } from 'react-icons/
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { io } from 'socket.io-client';
-import { updateUserLocation, followRetailer, unfollowRetailer } from '../api/index';
+import { updateUserLocation, followRetailer, unfollowRetailer, updateUserProfile } from '../api/index';
 import createAvatarIcon from '../utils/createAvatarIcon';
 import { useNavigate } from 'react-router-dom';
 import MapPicker from './MapPicker';
@@ -49,7 +49,13 @@ function MapDashboardView({ user, setUser }) {
   const [location, setLocation] = useState(
     user?.location?.lat && user?.location?.lng ? user.location : DEFAULT_CENTER
   );
-  
+
+  useEffect(() => {
+    if (user?.location?.lat && user?.location?.lng) {
+      setLocation(user.location);
+    }
+  }, [user?.location?.lat, user?.location?.lng]);
+
   // Location Modes
   const [mode, setMode] = useState(() => localStorage.getItem('locationMode') || "live");
   const [showPicker, setShowPicker] = useState(false);
@@ -63,18 +69,33 @@ function MapDashboardView({ user, setUser }) {
     const saved = localStorage.getItem('isOnlineStatus');
     return saved !== null ? JSON.parse(saved) : true;
   });
+  const [isProximityAlertsEnabled, setIsProximityAlertsEnabled] = useState(
+    user?.notificationPreferences?.proximityAlerts ?? true
+  );
   const socketRef = useRef(null);
+
+  const isOnlineStatusRef = useRef(isOnlineStatus);
+  useEffect(() => {
+    isOnlineStatusRef.current = isOnlineStatus;
+  }, [isOnlineStatus]);
 
   // --- Socket Logic ---
   useEffect(() => {
     if (!user) return;
     const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
-    socketRef.current = io(socketUrl, { query: { userId: user._id } });
+    socketRef.current = io(socketUrl, { 
+      query: { 
+        userId: user._id,
+        isOnline: isOnlineStatus
+      } 
+    });
     
-    socketRef.current.emit('join-room', user.role);
+    socketRef.current.on('connect', () => {
+      socketRef.current.emit('join-room', user.role);
+    });
 
     const heartbeatInterval = setInterval(() => {
-      if (isOnlineStatus) socketRef.current.emit('heartbeat');
+      if (isOnlineStatusRef.current) socketRef.current.emit('heartbeat');
     }, 5000);
 
     socketRef.current.on('active-users', (activeUsers) => {
@@ -127,15 +148,32 @@ function MapDashboardView({ user, setUser }) {
       clearInterval(heartbeatInterval);
       if (socketRef.current) socketRef.current.disconnect();
     };
-  }, [user, isOnlineStatus]);
+  }, [user]);
 
-  // Handle explicit status toggle
   const handleStatusToggle = (e) => {
     const online = e.target.checked;
     setIsOnlineStatus(online);
     localStorage.setItem('isOnlineStatus', JSON.stringify(online));
     if (socketRef.current) {
       socketRef.current.emit('manual-status-change', online);
+    }
+  };
+
+  const handleProximityToggle = async (e) => {
+    const enabled = e.target.checked;
+    setIsProximityAlertsEnabled(enabled);
+    try {
+      await updateUserProfile(user._id, { 
+        notificationPreferences: { proximityAlerts: enabled } 
+      });
+      if (setUser) {
+        setUser(prev => ({ 
+          ...prev, 
+          notificationPreferences: { proximityAlerts: enabled } 
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to update proximity alerts preference', err);
     }
   };
 
@@ -300,6 +338,19 @@ function MapDashboardView({ user, setUser }) {
             color="primary"
           />
         </Box>
+        {user?.role === 'customer' && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, borderLeft: '1px solid #ddd', pl: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: isProximityAlertsEnabled ? '#1976d2' : '#757575' }}>
+              Alerts
+            </Typography>
+            <Switch 
+              size="small" 
+              checked={isProximityAlertsEnabled} 
+              onChange={handleProximityToggle} 
+              color="info"
+            />
+          </Box>
+        )}
       </Box>
 
       {/* LOCATION MODE TOGGLE (Live vs Manual) */}

@@ -13,8 +13,6 @@ export default function CustomerList({ customers }) {
           />
           <div>
             <h4 style={{ margin: 0 }}>{customer.name}</h4>
-            <p style={{ margin: "4px 0", color: "#666" }}>{customer.city}</p>
-            <p style={{ margin: "4px 0", color: "#666" }}>Interests: {customer.interest}</p>
           </div>
         </div>
       ))}

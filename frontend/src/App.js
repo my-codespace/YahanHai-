@@ -74,7 +74,10 @@ function AppWrapper() {
 
     const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
     const socket = io(socketUrl, {
-      query: { userId: user._id }
+      query: { 
+        userId: user._id,
+        isOnline: localStorage.getItem('isOnlineStatus') !== 'false'
+      }
     });
 
     socket.on('retailer-online', ({ retailerId, retailerName }) => {
