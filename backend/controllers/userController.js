@@ -356,7 +356,7 @@ exports.getOnlineUsers = async (req, res) => {
 exports.updateUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const updateData = req.body || {};
 
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ msg: "User not found" });
@@ -374,23 +374,93 @@ exports.updateUserProfile = async (req, res) => {
       }
     });
 
+    // Handle file uploads
+    if (req.files) {
+      if (req.files.profilePic) {
+        profileData.profilePic = req.files.profilePic[0].path;
+      }
+      if (req.files.businessLogo) {
+        profileData.businessLogo = req.files.businessLogo[0].path;
+      }
+      if (req.files.retailerPhoto) {
+        profileData.ownerPhoto = req.files.retailerPhoto[0].path;
+      }
+      if (req.files.storefrontPhoto) {
+        profileData.storefrontPhoto = req.files.storefrontPhoto[0].path;
+      }
+    }
+
     if (Object.keys(baseData).length > 0) {
       await User.findByIdAndUpdate(id, baseData);
     }
 
-    if (Object.keys(profileData).length > 0) {
-      if (user.role === 'customer') {
-        await CustomerProfile.findOneAndUpdate({ userId: id }, profileData, { upsert: true });
-      } else {
-        if (profileData.operatingHours !== undefined) {
+    if (user.role === 'customer') {
+      // Parse stringified objects/arrays from FormData
+      if (typeof profileData.notificationPreferences === 'string') {
+        try {
+          profileData.notificationPreferences = JSON.parse(profileData.notificationPreferences);
+        } catch (e) {
+          console.error('Failed to parse notificationPreferences', e);
+        }
+      }
+      if (typeof profileData.savedAddresses === 'string') {
+        try {
+          profileData.savedAddresses = JSON.parse(profileData.savedAddresses);
+        } catch (e) {
+          console.error('Failed to parse savedAddresses', e);
+        }
+      }
+
+      await CustomerProfile.findOneAndUpdate({ userId: id }, profileData, { upsert: true, new: true });
+    } else {
+      // Parse operating hours from FormData
+      if (profileData.operatingHours !== undefined) {
+        if (typeof profileData.operatingHours === 'string') {
+          try {
+            profileData.operatingHours = JSON.parse(profileData.operatingHours);
+          } catch (e) {
+            profileData.operatingHours = parseOperatingHours(profileData.operatingHours);
+          }
+        } else {
           profileData.operatingHours = parseOperatingHours(profileData.operatingHours);
         }
-        await RetailerProfile.findOneAndUpdate({ userId: id }, profileData, { upsert: true });
       }
+      
+      // Parse deliveryAvailable boolean
+      if (profileData.deliveryAvailable !== undefined) {
+        profileData.deliveryAvailable = profileData.deliveryAvailable === 'true' || profileData.deliveryAvailable === true;
+      }
+
+      await RetailerProfile.findOneAndUpdate({ userId: id }, profileData, { upsert: true, new: true });
     }
 
+    // Return the fully populated user object
     const updatedUser = await User.findById(id).select('-password');
-    res.json(updatedUser);
+    if (!updatedUser) return res.status(404).json({ msg: "User not found" });
+
+    const userObj = updatedUser.toObject();
+    
+    if (updatedUser.role === 'customer') {
+      const profile = await CustomerProfile.findOne({ userId: updatedUser._id });
+      if (profile) Object.assign(userObj, profile.toObject(), { _id: updatedUser._id });
+      const follows = await Follow.find({ customerId: updatedUser._id }).select('retailerId');
+      userObj.followedRetailers = follows.map(f => f.retailerId.toString());
+    } else {
+      const profile = await RetailerProfile.findOne({ userId: updatedUser._id });
+      if (profile) Object.assign(userObj, profile.toObject(), { _id: updatedUser._id });
+    }
+
+    const userLocation = await UserLocation.findOne({ userId: updatedUser._id });
+    if (userLocation && userLocation.location && userLocation.location.coordinates) {
+      userObj.location = {
+        lng: userLocation.location.coordinates[0],
+        lat: userLocation.location.coordinates[1]
+      };
+      userObj.isOnline = userLocation.isOnline;
+      userObj.lastSeen = userLocation.lastSeen;
+    }
+
+    res.json(userObj);
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });
