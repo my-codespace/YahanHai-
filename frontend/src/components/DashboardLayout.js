@@ -87,7 +87,7 @@ function DashboardLayout({ user, onLogout }) {
     <Box sx={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
 
       {/* The Outlet renders the MapDashboardView which contains the full-bleed map */}
-      <Box sx={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
+      <Box sx={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, overflowY: 'auto' }}>
         <Outlet />
       </Box>
 

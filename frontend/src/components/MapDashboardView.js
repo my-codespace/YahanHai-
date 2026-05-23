@@ -247,7 +247,11 @@ function MapDashboardView({ user, setUser }) {
 
   const handleVisitProfile = () => {
     if (selectedUser) {
-      navigate(`/dashboard/profile/${selectedUser._id}`);
+      if (selectedUser.role === 'retailer') {
+        navigate(`/dashboard/retailer/${selectedUser._id}`);
+      } else {
+        navigate(`/dashboard/profile/${selectedUser._id}`);
+      }
     }
   };
 

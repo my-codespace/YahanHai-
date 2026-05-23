@@ -17,6 +17,23 @@ function Profile() {
   if (error) return <div className="centered-error">{error}</div>;
   if (!user) return <div style={{ padding: 32, textAlign: 'center' }}>Loading profile...</div>;
 
+  const getAvatarUrl = () => {
+    if (!user) return '/default-avatar.png';
+    if (user.role === 'retailer') {
+      const path = user.businessLogo || user.ownerPhoto;
+      if (!path) return '/default-business.png';
+      return path.startsWith('http') ? path : `http://localhost:5000/${path}`;
+    } else {
+      const path = user.profilePic;
+      if (!path) return '/default-avatar.png';
+      return path.startsWith('http') ? path : `http://localhost:5000/${path}`;
+    }
+  };
+
+  const getFallbackAvatar = () => {
+    return user?.role === 'retailer' ? '/default-business.png' : '/default-avatar.png';
+  };
+
   return (
     <div className="main-container">
       <button 
@@ -37,12 +54,12 @@ function Profile() {
 
       <div className="profile-card">
         <img
-          src={user?.profilePic ? `http://localhost:5000/${user.profilePic}` : '/default-avatar.png'}
+          src={getAvatarUrl()}
           alt={user.name}
           className="profile-avatar-lg"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = '/default-avatar.png';
+            e.target.src = getFallbackAvatar();
           }}
         />
         <div className="profile-details">
