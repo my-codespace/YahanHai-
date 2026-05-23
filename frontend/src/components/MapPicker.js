@@ -9,10 +9,18 @@ export default function MapPicker({ initialCenter, avatarUser, onConfirm, onCanc
 
   return (
     <div>
-      <MapContainer center={marker} zoom={15} style={{ height: "300px", width: "100%" }}>
+      <MapContainer 
+        center={marker} 
+        zoom={15} 
+        style={{ height: "300px", width: "100%" }}
+        minZoom={2.5}
+        maxBounds={[[-90, -180], [90, 180]]}
+        maxBoundsViscosity={1.0}
+      >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; OpenStreetMap contributors'
+          noWrap={true}
         />
         <Marker
           position={marker}

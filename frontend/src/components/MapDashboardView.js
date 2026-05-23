@@ -314,10 +314,14 @@ function MapDashboardView({ user, setUser }) {
         zoom={15}
         zoomControl={false}
         style={{ height: '100vh', width: '100vw', zIndex: 0 }}
+        minZoom={2.5}
+        maxBounds={[[-90, -180], [90, 180]]}
+        maxBoundsViscosity={1.0}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+          noWrap={true}
         />
         
         {/* Current User Marker */}
