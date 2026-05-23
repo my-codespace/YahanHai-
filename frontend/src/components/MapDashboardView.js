@@ -38,6 +38,38 @@ function MyLocationButton({ location }) {
   );
 }
 
+// Component to auto-center the map when the user location first loads or updates
+function MapCenterController({ center, mode }) {
+  const map = useMap();
+  const autoCenterRef = useRef(true);
+
+  // Re-enable auto-centering if the mode changes or if center is reset/changed manually
+  useEffect(() => {
+    autoCenterRef.current = true;
+  }, [mode]);
+
+  useEffect(() => {
+    // When the map is dragged by the user, stop auto-centering
+    const handleDragStart = () => {
+      autoCenterRef.current = false;
+    };
+    map.on('dragstart', handleDragStart);
+    return () => {
+      map.off('dragstart', handleDragStart);
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (center && center.lat && center.lng) {
+      if (autoCenterRef.current) {
+        map.setView([center.lat, center.lng], map.getZoom());
+      }
+    }
+  }, [center, map]);
+
+  return null;
+}
+
 function MapDashboardView({ user, setUser }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -302,6 +334,7 @@ function MapDashboardView({ user, setUser }) {
         ))}
 
         <MyLocationButton location={location} />
+        <MapCenterController center={location} mode={mode} />
       </MapContainer>
 
       {/* FLOATING SEARCH & STATUS BAR */}

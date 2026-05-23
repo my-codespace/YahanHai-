@@ -4,7 +4,34 @@ const User = require('../models/User');
 const CustomerProfile = require('../models/CustomerProfile');
 const RetailerProfile = require('../models/RetailerProfile');
 const UserLocation = require('../models/UserLocation');
+const Follow = require('../models/Follow');
 const parseOperatingHours = require('../utils/parseOperatingHours');
+
+const getPopulatedUserResponse = async (user) => {
+  const userObj = user.toObject();
+  delete userObj.password;
+
+  if (user.role === 'customer') {
+    const profile = await CustomerProfile.findOne({ userId: user._id });
+    if (profile) Object.assign(userObj, profile.toObject(), { _id: user._id });
+    const follows = await Follow.find({ customerId: user._id }).select('retailerId');
+    userObj.followedRetailers = follows.map(f => f.retailerId.toString());
+  } else {
+    const profile = await RetailerProfile.findOne({ userId: user._id });
+    if (profile) Object.assign(userObj, profile.toObject(), { _id: user._id });
+  }
+
+  const userLocation = await UserLocation.findOne({ userId: user._id });
+  if (userLocation && userLocation.location && userLocation.location.coordinates) {
+    userObj.location = {
+      lng: userLocation.location.coordinates[0],
+      lat: userLocation.location.coordinates[1]
+    };
+    userObj.isOnline = userLocation.isOnline;
+    userObj.lastSeen = userLocation.lastSeen;
+  }
+  return userObj;
+};
 
 exports.register = async (req, res) => {
   try {
@@ -74,8 +101,7 @@ exports.register = async (req, res) => {
     const payload = { userId: user.id, role: user.role };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    const userResponse = await getPopulatedUserResponse(user);
     res.json({ token, role: user.role, user: userResponse });
   } catch (err) {
     console.error('Registration Error:', err.message);
@@ -95,8 +121,7 @@ exports.login = async (req, res) => {
     const payload = { userId: user.id, role: user.role };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    const userResponse = await getPopulatedUserResponse(user);
 
     res.json({ token, role: user.role, user: userResponse });
   } catch (err) {
