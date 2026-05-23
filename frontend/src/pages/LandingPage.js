@@ -783,10 +783,14 @@ export default function LandingPage() {
                   center={[28.6139, 77.2090]}
                   zoom={13}
                   style={{ height: 300, width: "100%" }}
+                  minZoom={2.5}
+                  maxBounds={[[-90, -180], [90, 180]]}
+                  maxBoundsViscosity={1.0}
                 >
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution="&copy; OpenStreetMap contributors"
+                    noWrap={true}
                   />
                   <Marker position={[28.6139, 77.2090]}>
                     <Popup>Live Map Preview</Popup>

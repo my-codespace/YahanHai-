@@ -32,10 +32,18 @@ export default function MapView({ center, markers = [] }) {
   if (!center?.lat || !center?.lng) return <div>Loading map...</div>;
 
   return (
-    <MapContainer center={[center.lat, center.lng]} zoom={15} style={{ height: "400px", width: "100%" }}>
+    <MapContainer 
+      center={[center.lat, center.lng]} 
+      zoom={15} 
+      style={{ height: "400px", width: "100%" }}
+      minZoom={2.5}
+      maxBounds={[[-90, -180], [90, 180]]}
+      maxBoundsViscosity={1.0}
+    >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; OpenStreetMap contributors'
+        noWrap={true}
       />
       {markers.map((m, i) => (
         <Marker

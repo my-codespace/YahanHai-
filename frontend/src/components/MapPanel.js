@@ -55,10 +55,14 @@ export default function MapPanel({ location, markers, role, user }) {
           center={[location.lat, location.lng]}
           zoom={15}
           style={{ height: '100%', width: '100%', borderRadius: 12 }}
+          minZoom={2.5}
+          maxBounds={[[-90, -180], [90, 180]]}
+          maxBoundsViscosity={1.0}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap contributors"
+            noWrap={true}
           />
           <Marker
             position={[location.lat, location.lng]}
