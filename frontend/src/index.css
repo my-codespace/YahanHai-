@@ -12,6 +12,7 @@ body, html, #root {
   color: var(--text, #222);
 }
 
+
 /* Theme variables for dashboard and cards */
 :root {
   --background: #f9f9f9;
