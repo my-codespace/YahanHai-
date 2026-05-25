@@ -1,4 +1,12 @@
-const API_URL = "http://localhost:5000/api";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
+// Helper wrapper to ensure all API calls include cookies credentials
+async function fetchWithCredentials(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    credentials: "include"
+  });
+}
 
 function getAuthHeaders(includeContentType = true) {
   const token = localStorage.getItem('token');
@@ -13,7 +21,7 @@ function getAuthHeaders(includeContentType = true) {
 }
 
 export async function registerUser(formData) {
-  const response = await fetch(`${API_URL}/auth/register`, {
+  const response = await fetchWithCredentials(`${API_URL}/auth/register`, {
     method: "POST",
     body: formData,
   });
@@ -21,7 +29,7 @@ export async function registerUser(formData) {
 }
 
 export async function loginUser(data) {
-  const response = await fetch(`${API_URL}/auth/login`, {
+  const response = await fetchWithCredentials(`${API_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -30,21 +38,21 @@ export async function loginUser(data) {
 }
 
 export async function getNearbyRetailers(lat, lng) {
-  const res = await fetch(`${API_URL}/users/retailers?lat=${lat}&lng=${lng}`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/retailers?lat=${lat}&lng=${lng}`, {
     headers: getAuthHeaders(false)
   });
   return res.json();
 }
 
 export async function getNearbyCustomers(lat, lng) {
-  const res = await fetch(`${API_URL}/users/customers?lat=${lat}&lng=${lng}`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/customers?lat=${lat}&lng=${lng}`, {
     headers: getAuthHeaders(false)
   });
   return res.json();
 }
 
 export async function getInterestedCustomers(retailerId) {
-  const res = await fetch(`${API_URL}/users/interested-customers?retailerId=${retailerId}`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/interested-customers?retailerId=${retailerId}`, {
     headers: getAuthHeaders(false)
   });
   if (!res.ok) throw new Error(`Failed to fetch interested customers: ${res.statusText}`);
@@ -52,7 +60,7 @@ export async function getInterestedCustomers(retailerId) {
 }
 
 export async function getFollowedRetailers(customerId) {
-  const res = await fetch(`${API_URL}/users/followed-retailers?customerId=${customerId}`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/followed-retailers?customerId=${customerId}`, {
     headers: getAuthHeaders(false)
   });
   if (!res.ok) throw new Error(`Failed to fetch followed retailers: ${res.statusText}`);
@@ -60,7 +68,7 @@ export async function getFollowedRetailers(customerId) {
 }
 
 export async function getUserProfile(userId) {
-  const res = await fetch(`${API_URL}/users/${userId}`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/${userId}`, {
     headers: getAuthHeaders(false)
   });
   if (!res.ok) throw new Error("Failed to load profile");
@@ -68,7 +76,7 @@ export async function getUserProfile(userId) {
 }
 
 export async function updateUserProfile(userId, data) {
-  const res = await fetch(`${API_URL}/users/${userId}`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/${userId}`, {
     method: "PUT",
     headers: getAuthHeaders(true),
     body: JSON.stringify(data),
@@ -78,7 +86,7 @@ export async function updateUserProfile(userId, data) {
 }
 
 export async function followRetailer(customerId, retailerId) {
-  const res = await fetch(`${API_URL}/users/follow`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/follow`, {
     method: "POST",
     headers: getAuthHeaders(true),
     body: JSON.stringify({ customerId, retailerId }),
@@ -87,7 +95,7 @@ export async function followRetailer(customerId, retailerId) {
 }
 
 export async function unfollowRetailer(customerId, retailerId) {
-  const res = await fetch(`${API_URL}/users/unfollow`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/unfollow`, {
     method: "POST",
     headers: getAuthHeaders(true),
     body: JSON.stringify({ customerId, retailerId }),
@@ -97,14 +105,14 @@ export async function unfollowRetailer(customerId, retailerId) {
 }
 
 export async function getAllOnlineUsers(role) {
-  const res = await fetch(`${API_URL}/users/online?role=${role}`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/online?role=${role}`, {
     headers: getAuthHeaders(false)
   });
   return res.json();
 }
 
 export async function updateUserLocation(userId, lat, lng) {
-  const res = await fetch(`${API_URL}/users/update-location`, {
+  const res = await fetchWithCredentials(`${API_URL}/users/update-location`, {
     method: "POST",
     headers: getAuthHeaders(true),
     body: JSON.stringify({ userId, lat, lng }),
@@ -113,7 +121,7 @@ export async function updateUserLocation(userId, lat, lng) {
 }
 
 export async function getNotifications() {
-  const res = await fetch(`${API_URL}/notifications`, {
+  const res = await fetchWithCredentials(`${API_URL}/notifications`, {
     headers: getAuthHeaders(false)
   });
   if (!res.ok) throw new Error("Failed to load notifications");
@@ -121,7 +129,7 @@ export async function getNotifications() {
 }
 
 export async function markNotificationAsRead(notificationId) {
-  const res = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
+  const res = await fetchWithCredentials(`${API_URL}/notifications/${notificationId}/read`, {
     method: "PUT",
     headers: getAuthHeaders(true)
   });

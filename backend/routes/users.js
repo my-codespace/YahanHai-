@@ -44,8 +44,10 @@ router.get('/followed-retailers', userController.getFollowedRetailers);
 // Unfollow a retailer
 router.post('/unfollow', userController.unfollowRetailer);
 
+const { validateLocation } = require('../middleware/validation');
+
 // Update user location
-router.post('/update-location', userController.updateLocation);
+router.post('/update-location', validateLocation, userController.updateLocation);
 
 // Follow a retailer
 router.post('/follow', userController.followRetailer);
