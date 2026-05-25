@@ -41,16 +41,19 @@ async function migrateUserLocationRoles() {
   }
 }
 
+const cookieParser = require('cookie-parser');
 connectDB().then(() => {
   migrateUserLocationRoles();
 });
 
 const app = express();
 const corsOptions = {
-  origin: process.env.CLIENT_URL || '*', // Use specific origin in production
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 };
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json());
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

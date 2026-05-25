@@ -29,15 +29,17 @@ const upload = multer({
   }
 });
 
+const { validateRegister, validateLogin } = require('../middleware/validation');
+
 // Register with file upload support
 router.post('/register', upload.fields([
   { name: 'profilePic', maxCount: 1 },
   { name: 'businessLogo', maxCount: 1 },
   { name: 'retailerPhoto', maxCount: 1 },
   { name: 'storefrontPhoto', maxCount: 1 }
-]), authController.register);
+]), validateRegister, authController.register);
 
 // Login Route
-router.post('/login', authController.login);
+router.post('/login', validateLogin, authController.login);
 
 module.exports = router;

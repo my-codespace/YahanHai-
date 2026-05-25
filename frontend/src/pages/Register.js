@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { registerUser } from "../api";
+import { registerUser } from "../api/index";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
