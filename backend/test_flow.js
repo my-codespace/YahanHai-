@@ -1,7 +1,10 @@
 const axios = require('axios');
 const fs = require('fs');
+try {
+  require('dotenv').config();
+} catch (e) {}
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.API_URL || 'http://localhost:5000/api';
 
 async function runTests() {
   console.log("Starting End-to-End API Flow Test...\n");

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getUserProfile } from '../api/index';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 function Profile() {
   const { id } = useParams();
@@ -22,11 +23,11 @@ function Profile() {
     if (user.role === 'retailer') {
       const path = user.businessLogo || user.ownerPhoto;
       if (!path) return '/default-business.png';
-      return path.startsWith('http') ? path : `http://localhost:5000/${path}`;
+      return resolveAssetUrl(path);
     } else {
       const path = user.profilePic;
       if (!path) return '/default-avatar.png';
-      return path.startsWith('http') ? path : `http://localhost:5000/${path}`;
+      return resolveAssetUrl(path);
     }
   };
 

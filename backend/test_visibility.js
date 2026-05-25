@@ -1,9 +1,12 @@
 const axios = require('axios');
 const io = require('socket.io-client');
 const FormData = require('form-data');
+try {
+  require('dotenv').config();
+} catch (e) {}
 
-const API_URL = 'http://localhost:5000/api';
-const SOCKET_URL = 'http://localhost:5000';
+const API_URL = process.env.API_URL || 'http://localhost:5000/api';
+const SOCKET_URL = process.env.SOCKET_URL || 'http://localhost:5000';
 
 async function delay(ms) { return new Promise(res => setTimeout(res, ms)); }
 

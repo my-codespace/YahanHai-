@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import MapPanel from '../components/MapPanel';
 import { getUserProfile, followRetailer, unfollowRetailer } from '../api/index';
 import formatOperatingHours from '../utils/formatOperatingHours';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { FiClock, FiPhone, FiTag, FiHeart, FiArrowLeft, FiInfo, FiLayers } from 'react-icons/fi';
 import { FaStar } from 'react-icons/fa';
 
@@ -100,12 +101,12 @@ function RetailerProfile({ user, setUser }) {
 
   const getLogoUrl = (logoPath) => {
     if (!logoPath) return '/default-business.png';
-    return logoPath.startsWith('http') ? logoPath : `http://localhost:5000/${logoPath}`;
+    return resolveAssetUrl(logoPath);
   };
 
   const getPhotoUrl = (photoPath) => {
     if (!photoPath) return null;
-    return photoPath.startsWith('http') ? photoPath : `http://localhost:5000/${photoPath}`;
+    return resolveAssetUrl(photoPath);
   };
 
   if (error) {

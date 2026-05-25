@@ -1,5 +1,6 @@
 // src/components/ProfileCard.js
 import React from 'react';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 export default function ProfileCard({ user }) {
   // For customers: show profilePic, for retailers: show businessLogo and retailerPhoto
@@ -14,7 +15,7 @@ export default function ProfileCard({ user }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         {user.role === 'customer' && user.profilePic && (
           <img
-            src={`http://localhost:5000/${user.profilePic}`}
+            src={resolveAssetUrl(user.profilePic)}
             alt="Profile"
             style={{
               width: 70,
@@ -27,7 +28,7 @@ export default function ProfileCard({ user }) {
         )}
         {user.role === 'retailer' && user.businessLogo && (
           <img
-            src={`http://localhost:5000/${user.businessLogo}`}
+            src={resolveAssetUrl(user.businessLogo)}
             alt="Business Logo"
             style={{
               width: 70,

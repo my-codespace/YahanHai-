@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Message from '../components/Message';
 import { FiUser, FiCamera, FiSave, FiUpload, FiSettings } from 'react-icons/fi';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 function EditProfile({ user, setUser }) {
   const [formData, setFormData] = useState({
@@ -45,8 +46,7 @@ function EditProfile({ user, setUser }) {
 
   // Helper to build resolved URL
   const getFullUrl = (path) => {
-    if (!path) return '';
-    return path.startsWith('http') ? path : `http://localhost:5000/${path}`;
+    return resolveAssetUrl(path);
   };
 
   useEffect(() => {
@@ -137,7 +137,8 @@ function EditProfile({ user, setUser }) {
         if (storefrontPhoto) data.append('storefrontPhoto', storefrontPhoto);
       }
 
-      const response = await fetch(`http://localhost:5000/api/users/${user._id}`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${apiUrl}/users/${user._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

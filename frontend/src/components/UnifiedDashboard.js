@@ -7,6 +7,7 @@ import ActivityFeed from "./ActivityFeed";
 import { getNearbyUsers, getUserProfile, followRetailer } from "../api/index.js";
 import RetailerList from "./RetailerList";
 import CustomerList from "./CustomerList";
+import { resolveAssetUrl } from "../utils/resolveAssetUrl";
 
 const DEFAULT_CENTER = { lat: 28.6139, lng: 77.2090 };
 
@@ -64,10 +65,10 @@ export default function UnifiedDashboard({ user, onLogout, onUpdateUser }) {
       avatarUrl:
         u.role === "retailer"
           ? u.businessLogo
-            ? `http://localhost:5000/${u.businessLogo}`
+            ? resolveAssetUrl(u.businessLogo)
             : undefined
           : u.profilePic
-          ? `http://localhost:5000/${u.profilePic}`
+          ? resolveAssetUrl(u.profilePic)
           : undefined,
       label: u.role === "retailer" ? u.shopName : u.name,
       id: u._id,

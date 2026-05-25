@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaUser, FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 function TopBar({ user, onLogout, onToggleSidebar }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -10,7 +11,7 @@ function TopBar({ user, onLogout, onToggleSidebar }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <img
-            src={user?.profilePic ? `http://localhost:5000/${user.profilePic}` : '/default-avatar.png'}
+            src={user?.profilePic ? resolveAssetUrl(user.profilePic) : '/default-avatar.png'}
             alt={user?.name}
             style={{ width: 32, height: 32, borderRadius: '50%' }}
           />

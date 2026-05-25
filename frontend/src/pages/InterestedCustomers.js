@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getInterestedCustomers, getFollowedRetailers } from '../api/index.js';
 import { Link } from 'react-router-dom';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 function InterestedCustomers({ user }) {
   const [list, setList] = useState([]);
@@ -40,9 +41,9 @@ function InterestedCustomers({ user }) {
   const emptyText = isRetailer ? 'No customers have followed you yet.' : 'You are not following any retailers yet.';
 
   const getProfilePic = (person) => {
-    if (person.profilePic) return `http://localhost:5000/${person.profilePic}`;
-    if (person.retailerPhoto) return `http://localhost:5000/${person.retailerPhoto}`;
-    if (person.businessLogo) return `http://localhost:5000/${person.businessLogo}`;
+    if (person.profilePic) return resolveAssetUrl(person.profilePic);
+    if (person.retailerPhoto) return resolveAssetUrl(person.retailerPhoto);
+    if (person.businessLogo) return resolveAssetUrl(person.businessLogo);
     return '/default-avatar.png'; // Fallback
   };
 
