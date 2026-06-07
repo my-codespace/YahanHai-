@@ -84,8 +84,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Handle preflight OPTIONS requests for all routes
-app.options('*', cors(corsOptions));
+// Handle preflight OPTIONS requests for all routes (Express 5 requires regex-style wildcard)
+app.options('/(.*)', cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 // Serve uploaded files statically
