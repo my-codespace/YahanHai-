@@ -47,12 +47,45 @@ connectDB().then(() => {
 });
 
 const app = express();
+
+// --- Robust CORS: normalise CLIENT_URL, support multiple origins ---
+function normaliseOrigin(raw) {
+  if (!raw) return null;
+  const trimmed = raw.trim().replace(/\/+$/, ''); // strip trailing slash
+  // If the user forgot to add the protocol, add https://
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    return 'https://' + trimmed;
+  }
+  return trimmed;
+}
+
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  normaliseOrigin(process.env.CLIENT_URL),
+].filter(Boolean); // remove nulls
+
+console.log('Allowed CORS origins:', allowedOrigins);
+
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow server-to-server requests (no origin header, e.g. curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('CORS blocked request from origin:', origin);
+      callback(new Error('Not allowed by CORS: ' + origin));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
+
 app.use(cors(corsOptions));
+// Handle preflight OPTIONS requests for all routes
+app.options('*', cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 // Serve uploaded files statically
@@ -60,7 +93,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Attach Socket.IO to the HTTP server
 const server = http.createServer(app);
 const io = socketIo(server, {
-  cors: corsOptions,
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST'],
+  },
 });
 
 // Make io accessible in routes via req.io
