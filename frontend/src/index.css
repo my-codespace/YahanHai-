@@ -441,6 +441,75 @@ body.dark-mode .dashboard-header {
   .topbar .hamburger {
     display: block;
   }
+
+  /* Add bottom padding to all pages so content isn't hidden behind mobile nav dock */
+  .main-container {
+    padding: 20px 16px 100px 16px !important;
+  }
+
+  /* Page titles should be smaller on mobile */
+  .page-title {
+    font-size: 1.6rem !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Profile card stacks vertically on mobile */
+  .profile-card {
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+    gap: 20px;
+    text-align: center;
+  }
+  .profile-avatar-lg {
+    margin: 0 auto;
+  }
+  .profile-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.95rem;
+    justify-content: center;
+  }
+  .profile-name {
+    font-size: 1.5rem;
+  }
+
+  /* Customer/Retailer cards */
+  .customer-card {
+    padding: 16px;
+    gap: 0;
+  }
+  .customer-avatar {
+    width: 50px;
+    height: 50px;
+    margin-right: 16px;
+    flex-shrink: 0;
+  }
+  .customer-name {
+    font-size: 1.05rem;
+  }
+
+  /* Dashboard header */
+  .dashboard-header h1 {
+    font-size: 1.6rem;
+  }
+  .dashboard-subtitle {
+    font-size: 1rem;
+  }
+
+  /* Location buttons */
+  .location-btn-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Edit profile */
+  .edit-profile-fields-card {
+    padding: 20px 16px;
+  }
+  .retailer-photos-preview-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Overlay for mobile sidebar */
@@ -1001,4 +1070,71 @@ body.dark-mode .dashboard-header {
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--border);
+}
+
+/* =====================================================
+   MOBILE-SPECIFIC OVERRIDES FOR DASHBOARD PAGES
+   These ensure content is not hidden behind the bottom
+   floating navigation dock on mobile screens.
+   ===================================================== */
+
+/* Retailer Profile page mobile padding */
+@media (max-width: 768px) {
+  .retailer-profile-page {
+    padding-bottom: 100px !important;
+  }
+
+  /* Retailer info card compact on mobile */
+  .retailer-info-card {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  /* Content section compact on mobile */
+  .retailer-content-section {
+    padding: 16px;
+  }
+
+  /* Products grid adjusts on mobile */
+  .product-card-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Edit profile page bottom padding for nav dock */
+  .edit-profile-page-wrapper {
+    padding-bottom: 100px !important;
+  }
+
+  /* Overflow fix for dashboard pages that are behind the full-bleed map */
+  .dashboard-page-scroll {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 90px;
+  }
+}
+
+/* Very small screens (≤ 480px) */
+@media (max-width: 480px) {
+  .product-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-card {
+    padding: 12px;
+  }
+
+  .customer-avatar {
+    width: 44px;
+    height: 44px;
+    margin-right: 12px;
+  }
+
+  .retailer-section-title {
+    font-size: 1.1rem;
+  }
+
+  .form-group-grid {
+    grid-template-columns: 1fr;
+  }
 }

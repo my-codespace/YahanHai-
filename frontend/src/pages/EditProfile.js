@@ -165,7 +165,7 @@ function EditProfile({ user, setUser }) {
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: '24px auto', padding: '0 20px' }}>
+    <div style={{ maxWidth: 900, margin: '24px auto', padding: '0 20px' }} className="edit-profile-page-wrapper">
       <h1 style={{ fontWeight: 800, fontSize: '2.2rem', letterSpacing: '-1px', marginBottom: '24px', color: 'var(--text)' }}>
         Edit Profile
       </h1>

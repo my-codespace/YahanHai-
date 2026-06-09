@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import { getUserProfile } from './api/index';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './pages/NotFound';
+import AppLoadingScreen from './components/AppLoadingScreen';
 
 function AppWrapper() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -104,49 +105,7 @@ function AppWrapper() {
   }, [user?._id]);
 
   if (loading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'linear-gradient(135deg, #1976d2 0%, #63a4ff 100%)',
-        fontFamily: 'Inter, Arial, sans-serif'
-      }}>
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.25); opacity: 1; }
-          }
-        `}</style>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.85)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.4)',
-          borderRadius: 20,
-          padding: '32px 48px',
-          boxShadow: '0 8px 32px rgba(31, 38, 135, 0.15)',
-          textAlign: 'center',
-          color: '#1976d2',
-          fontWeight: 600,
-          fontSize: '1.15rem',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 16
-        }}>
-          <div style={{
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            background: '#1976d2',
-            animation: 'pulse 1.4s infinite ease-in-out'
-          }}></div>
-          <span>Synchronizing live locator dashboard...</span>
-        </div>
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   return (

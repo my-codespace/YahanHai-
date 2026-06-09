@@ -1,22 +1,14 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
+const { storage: cloudinaryStorage } = require('../config/cloudinary');
 const userController = require('../controllers/userController');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
-// Configure Multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/') // Make sure this folder exists
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.fieldname + '_' + Date.now() + path.extname(file.originalname))
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
+// Use Cloudinary storage for persistent image hosting
+// Files are uploaded directly to Cloudinary, not to local disk
+const upload = multer({
+  storage: cloudinaryStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: function (req, file, cb) {
     if (file.mimetype.startsWith('image/')) {

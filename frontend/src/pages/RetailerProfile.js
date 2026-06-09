@@ -137,7 +137,7 @@ function RetailerProfile({ user, setUser }) {
   const reviews = getMockReviews();
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '16px 24px' }}>
+    <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(12px, 4vw, 24px)', paddingBottom: 'max(24px, env(safe-area-inset-bottom, 24px))' }} className="retailer-profile-page">
       
       {/* Back Button */}
       <button 
@@ -165,13 +165,13 @@ function RetailerProfile({ user, setUser }) {
         background: 'var(--card-bg)',
         borderRadius: '16px',
         boxShadow: '0 4px 24px rgba(0,0,0,0.05)',
-        padding: '32px',
+        padding: 'clamp(16px, 5vw, 32px)',
         marginBottom: '24px',
         border: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: '24px',
+        gap: '20px',
         flexWrap: 'wrap'
       }}>
         <img
