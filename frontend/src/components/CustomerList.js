@@ -1,4 +1,5 @@
 import React from 'react';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 export default function CustomerList({ customers }) {
   return (
@@ -7,10 +8,10 @@ export default function CustomerList({ customers }) {
       {customers.map(customer => (
         <div key={customer._id} className="customer-card" style={{ display: "flex", alignItems: "center", marginBottom: 16, background: "#fff", borderRadius: 8, padding: 12 }}>
           <img
-            src={customer.profilePic || "/default-avatar.png"}
+            src={customer.profilePic ? resolveAssetUrl(customer.profilePic) : "/default-avatar.png"}
             alt={customer.name}
             style={{ width: 50, height: 50, borderRadius: "50%", marginRight: 16, objectFit: "cover" }}
-          />
+            onError={(e) => { e.target.onerror = null; e.target.src = '/default-avatar.png'; }}
           <div>
             <h4 style={{ margin: 0 }}>{customer.name}</h4>
           </div>

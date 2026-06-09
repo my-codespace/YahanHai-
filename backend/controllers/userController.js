@@ -501,3 +501,57 @@ exports.getUserById = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
+/**
+ * Admin migration: clear all stale local uploads/ paths from CustomerProfile and RetailerProfile.
+ * These are paths like "uploads/businessLogo_xxx.png" stored before Cloudinary integration.
+ * After this runs, users will see the default placeholder and can re-upload via Edit Profile.
+ * Protected by a secret key to prevent accidental execution.
+ */
+exports.clearStaleLocalImages = async (req, res) => {
+  // Simple secret guard — set MIGRATION_SECRET in Render env vars
+  const { secret } = req.query;
+  if (!secret || secret !== process.env.MIGRATION_SECRET) {
+    return res.status(403).json({ msg: 'Forbidden: invalid secret' });
+  }
+
+  try {
+    // Helper: returns true if value is a local uploads/ path (not http/https)
+    const isLocalPath = (val) => val && typeof val === 'string' && !val.startsWith('http');
+
+    // Clear stale paths in RetailerProfile
+    const retailers = await RetailerProfile.find({});
+    let retailerFixed = 0;
+    for (const p of retailers) {
+      const update = {};
+      if (isLocalPath(p.businessLogo))   update.businessLogo   = null;
+      if (isLocalPath(p.ownerPhoto))     update.ownerPhoto     = null;
+      if (isLocalPath(p.storefrontPhoto)) update.storefrontPhoto = null;
+      if (Object.keys(update).length > 0) {
+        await RetailerProfile.findByIdAndUpdate(p._id, { $set: update });
+        retailerFixed++;
+      }
+    }
+
+    // Clear stale paths in CustomerProfile
+    const customers = await CustomerProfile.find({});
+    let customerFixed = 0;
+    for (const p of customers) {
+      const update = {};
+      if (isLocalPath(p.profilePic)) update.profilePic = null;
+      if (Object.keys(update).length > 0) {
+        await CustomerProfile.findByIdAndUpdate(p._id, { $set: update });
+        customerFixed++;
+      }
+    }
+
+    res.json({
+      msg: 'Migration complete',
+      retailerProfilesFixed: retailerFixed,
+      customerProfilesFixed: customerFixed,
+    });
+  } catch (err) {
+    console.error('Migration error:', err);
+    res.status(500).json({ msg: 'Migration failed', error: err.message });
+  }
+};

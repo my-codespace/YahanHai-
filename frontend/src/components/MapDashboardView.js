@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import { io } from 'socket.io-client';
 import { updateUserLocation, followRetailer, unfollowRetailer, updateUserProfile } from '../api/index';
 import createAvatarIcon from '../utils/createAvatarIcon';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { useNavigate } from 'react-router-dom';
 import MapPicker from './MapPicker';
 
@@ -487,7 +488,12 @@ function MapDashboardView({ user, setUser }) {
             
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
               <Avatar 
-                src={selectedUser.businessLogo || selectedUser.profilePic} 
+                src={selectedUser.businessLogo 
+                  ? resolveAssetUrl(selectedUser.businessLogo) 
+                  : selectedUser.profilePic 
+                  ? resolveAssetUrl(selectedUser.profilePic) 
+                  : (selectedUser.role === 'retailer' ? '/default-business.png' : '/default-avatar.png')
+                } 
                 sx={{ width: 80, height: 80, border: '3px solid #1976d2' }}
               />
               <IconButton onClick={() => setIsDrawerOpen(false)}>
