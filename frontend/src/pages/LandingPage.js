@@ -50,8 +50,9 @@ function ScrollProgressBar() {
   );
 }
 
-// --- Sticky CTA Button ---
-function StickyCTA({ role }) {
+// --- Sticky CTA Button (desktop only — mobile has hero CTAs) ---
+function StickyCTA({ role, isMobile }) {
+  if (isMobile) return null;
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
@@ -95,35 +96,40 @@ function StickyCTA({ role }) {
   );
 }
 
-// --- Role Switcher ---
-function RoleSwitcher({ role, setRole }) {
+// --- Role Switcher (centred on mobile, top-right on desktop) ---
+function RoleSwitcher({ role, setRole, isMobile }) {
     return (
       <div
         style={{
           position: "fixed",
-          top: 80,
-          right: 32,
+          top: isMobile ? 74 : 80,
+          left: isMobile ? "50%" : undefined,
+          right: isMobile ? undefined : 32,
+          transform: isMobile ? "translateX(-50%)" : "none",
           zIndex: 2002,
           background: "#fff",
           borderRadius: 24,
           boxShadow: "0 2px 8px #1976d222",
-          padding: "4px 12px",
+          padding: isMobile ? "3px 8px" : "4px 12px",
           display: "flex",
           alignItems: "center",
-          gap: 12,
+          gap: isMobile ? 6 : 12,
           fontWeight: 600,
+          whiteSpace: "nowrap",
         }}
       >
-        <span style={{ color: "#1976d2" }}>View as:</span>
+        <span style={{ color: "#1976d2", fontSize: isMobile ? "0.82rem" : undefined }}>View as:</span>
         <button
           onClick={() => setRole("customer")}
           className={`role-btn${role === "customer" ? " selected" : ""}`}
+          style={{ fontSize: isMobile ? "0.82rem" : undefined, padding: isMobile ? "4px 10px" : undefined }}
         >
           Customer
         </button>
         <button
           onClick={() => setRole("retailer")}
           className={`role-btn${role === "retailer" ? " selected" : ""}`}
+          style={{ fontSize: isMobile ? "0.82rem" : undefined, padding: isMobile ? "4px 10px" : undefined }}
         >
           Retailer
         </button>
@@ -144,7 +150,7 @@ const fakeEvents = [
   "Someone is unlocking features!",
 ];
 
-function LiveActivityFeed() {
+function LiveActivityFeed({ isMobile }) {
   const [eventIdx, setEventIdx] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
@@ -152,6 +158,10 @@ function LiveActivityFeed() {
     }, 3500);
     return () => clearInterval(interval);
   }, []);
+
+  // Hide on mobile — it overlaps the map and CTA buttons
+  if (isMobile) return null;
+
   return (
     <div
       style={{
@@ -570,6 +580,8 @@ export default function LandingPage() {
   const [role, setRole] = useState("customer");
   const [usersOnline, setUsersOnline] = useState(12);
   const [scrolled, setScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -586,12 +598,21 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Close mobile menu when navigating
+  const closeMobileMenu = () => setMenuOpen(false);
+
   return (
     <>
       <ScrollProgressBar />
-      <StickyCTA role={role} />
-      <RoleSwitcher role={role} setRole={setRole} />
-      <LiveActivityFeed />
+      <StickyCTA role={role} isMobile={isMobile} />
+      <RoleSwitcher role={role} setRole={setRole} isMobile={isMobile} />
+      <LiveActivityFeed isMobile={isMobile} />
       <SimpleBar style={{ maxHeight: "100vh" }}>
         <div
           style={{
@@ -612,7 +633,7 @@ export default function LandingPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "0 56px 0 32px",
+              padding: isMobile ? "0 16px" : "0 56px 0 32px",
               height: 68,
               zIndex: 1000,
               boxShadow: "0 2px 8px #0001",
@@ -620,91 +641,181 @@ export default function LandingPage() {
               WebkitUserSelect: "none",
               MozUserSelect: "none",
               msUserSelect: "none",
+              boxSizing: "border-box",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center" }}>
+            {/* Logo */}
+            <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
               <img
                 src="/my-map-icon.png"
                 alt="App Logo"
                 style={{
-                  height: 40,
-                  marginRight: 16,
+                  height: isMobile ? 32 : 40,
+                  marginRight: isMobile ? 8 : 16,
                   userSelect: "none",
                   pointerEvents: "none",
+                  flexShrink: 0,
                 }}
                 draggable={false}
               />
               <span
                 style={{
-                  fontSize: "2rem",
+                  fontSize: isMobile ? "1.35rem" : "2rem",
                   fontWeight: 700,
                   letterSpacing: 1,
                   userSelect: "none",
+                  whiteSpace: "nowrap",
                 }}
               >
-                Yahan Hai!
+                YahanHai!
               </span>
             </div>
-            <nav>
-              <ul
-                style={{
-                  listStyle: "none",
-                  display: "flex",
-                  gap: 32,
-                  margin: 0,
-                  padding: 0,
-                  fontSize: "1.1rem",
-                  fontWeight: 500,
-                  userSelect: "none",
-                  marginRight: 32,
-                }}
-              >
-                <li>
-                  <a href="#about" className="link-hover" style={navLinkStyle}>
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#features" className="link-hover" style={navLinkStyle}>
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#contact" className="link-hover" style={navLinkStyle}>
-                    Contact
-                  </a>
-                </li>
-                <li>
-                  <Link to="/login" className="link-hover" style={navLinkStyle}>
-                    Login
-                  </Link>
-                </li>
-                <li>
-                <Link
-                    to="/register"
-                    className="header-btn header-btn-outline"
-                    style={{
+
+            {/* Desktop nav */}
+            {!isMobile && (
+              <nav>
+                <ul
+                  style={{
+                    listStyle: "none",
+                    display: "flex",
+                    gap: 32,
+                    margin: 0,
+                    padding: 0,
+                    fontSize: "1.1rem",
+                    fontWeight: 500,
+                    userSelect: "none",
+                    alignItems: "center",
+                  }}
+                >
+                  <li><a href="#about" className="link-hover" style={navLinkStyle}>About</a></li>
+                  <li><a href="#features" className="link-hover" style={navLinkStyle}>Features</a></li>
+                  <li><a href="#contact" className="link-hover" style={navLinkStyle}>Contact</a></li>
+                  <li><Link to="/login" className="link-hover" style={navLinkStyle}>Login</Link></li>
+                  <li>
+                    <Link
+                      to="/register"
+                      className="header-btn header-btn-outline"
+                      style={{
                         ...navLinkStyle,
-                        border: "2px solid #1976d2",
+                        border: "2px solid #fff",
                         color: "#1976d2",
                         background: "#fff",
                         borderRadius: 20,
                         padding: "6px 18px",
-                        fontWeight: 600
-                    }}
+                        fontWeight: 600,
+                      }}
                     >
-                    Register
-                </Link>
+                      Register
+                    </Link>
+                  </li>
+                </ul>
+              </nav>
+            )}
 
-                </li>
-              </ul>
-            </nav>
+            {/* Mobile hamburger button */}
+            {isMobile && (
+              <button
+                id="landing-hamburger"
+                onClick={() => setMenuOpen((o) => !o)}
+                style={{
+                  background: "none",
+                  border: "2px solid rgba(255,255,255,0.5)",
+                  borderRadius: 8,
+                  color: "#fff",
+                  fontSize: 22,
+                  cursor: "pointer",
+                  padding: "4px 10px",
+                  lineHeight: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+              >
+                {menuOpen ? "✕" : "☰"}
+              </button>
+            )}
           </header>
+
+          {/* Mobile slide-down nav menu */}
+          {isMobile && menuOpen && (
+            <div
+              style={{
+                position: "fixed",
+                top: 68,
+                left: 0,
+                right: 0,
+                background: "#1565c0",
+                zIndex: 999,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+                padding: "12px 0 16px 0",
+              }}
+            >
+              {[
+                { label: "About", href: "#about" },
+                { label: "Features", href: "#features" },
+                { label: "Contact", href: "#contact" },
+              ].map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={closeMobileMenu}
+                  style={{
+                    display: "block",
+                    color: "#fff",
+                    textDecoration: "none",
+                    padding: "13px 28px",
+                    fontWeight: 600,
+                    fontSize: "1.05rem",
+                    borderBottom: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                >
+                  {item.label}
+                </a>
+              ))}
+              <Link
+                to="/login"
+                onClick={closeMobileMenu}
+                style={{
+                  display: "block",
+                  color: "#fff",
+                  textDecoration: "none",
+                  padding: "13px 28px",
+                  fontWeight: 600,
+                  fontSize: "1.05rem",
+                  borderBottom: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                onClick={closeMobileMenu}
+                style={{
+                  display: "block",
+                  margin: "12px 20px 0 20px",
+                  background: "#fff",
+                  color: "#1976d2",
+                  textDecoration: "none",
+                  padding: "12px 24px",
+                  fontWeight: 700,
+                  fontSize: "1.05rem",
+                  borderRadius: 24,
+                  textAlign: "center",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                }}
+              >
+                Register
+              </Link>
+            </div>
+          )}
           <main
             style={{
               maxWidth: 900,
               margin: "0 auto",
-              padding: "100px 16px 32px 16px",
+              // Extra top padding on mobile: header(68) + RoleSwitcher(~40) + gap
+              padding: isMobile ? "124px 14px 32px 14px" : "100px 16px 32px 16px",
               boxSizing: "border-box",
             }}
           >
@@ -730,48 +841,57 @@ export default function LandingPage() {
                   ? "Find, follow, and connect with your favorite local shops in real time—always with full privacy control."
                   : "Show up to customers the moment they need you, build trust, and grow your loyal base."}
               </p>
-              <div style={{ margin: "24px 0" }}>
+              <div
+                style={{
+                  margin: "24px 0",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  gap: 12,
+                }}
+              >
                 <Link
                   to="/register"
                   className="button-hover"
                   style={{
                     background: "#1976d2",
                     color: "#fff",
-                    padding: "12px 32px",
+                    padding: isMobile ? "12px 24px" : "12px 32px",
                     borderRadius: 24,
                     fontWeight: 600,
-                    fontSize: "1.1rem",
+                    fontSize: isMobile ? "1rem" : "1.1rem",
                     textDecoration: "none",
-                    marginRight: 16,
                     boxShadow: "0 2px 8px #1976d222",
+                    display: "inline-block",
                   }}
                 >
                   {role === "customer" ? "Join as Customer" : "Join as Retailer"}
                 </Link>
                 <Link
-                    to="/login"
-                    className="header-btn header-btn-outline"
-                    style={{
-                        border: "2px solid #1976d2",
-                        color: "#1976d2",
-                        background: "#fff",
-                        borderRadius: 24,
-                        fontWeight: 600,
-                        fontSize: "1.1rem",
-                        padding: "12px 32px",
-                        marginLeft: 16,
-                        textDecoration: "none"
-                    }}
-                    >
-                    Login
+                  to="/login"
+                  className="header-btn header-btn-outline"
+                  style={{
+                    border: "2px solid #1976d2",
+                    color: "#1976d2",
+                    background: "#fff",
+                    borderRadius: 24,
+                    fontWeight: 600,
+                    fontSize: isMobile ? "1rem" : "1.1rem",
+                    padding: isMobile ? "12px 24px" : "12px 32px",
+                    textDecoration: "none",
+                    display: "inline-block",
+                  }}
+                >
+                  Login
                 </Link>
-
               </div>
               {/* Interactive Map Preview */}
               <div
                 style={{
                   margin: "32px auto 0 auto",
                   maxWidth: 500,
+                  width: "100%",
+                  boxSizing: "border-box",
                   borderRadius: 16,
                   overflow: "hidden",
                   boxShadow: "0 2px 16px #1976d222",
