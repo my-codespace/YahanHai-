@@ -83,7 +83,7 @@ function NotificationsView() {
   const isDark = document.body.classList.contains('dark');
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4, height: 'calc(100vh - 100px)', pt: { xs: 8, sm: 2 } }}>
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4, height: 'calc(100vh - 100px)', pt: { xs: 8, sm: 2 }, pb: { xs: '100px', sm: '24px' } }}>
       <Paper 
         elevation={0}
         sx={{
