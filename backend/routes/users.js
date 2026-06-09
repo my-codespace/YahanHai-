@@ -3,6 +3,7 @@ const multer = require('multer');
 const { storage: cloudinaryStorage } = require('../config/cloudinary');
 const userController = require('../controllers/userController');
 const auth = require('../middleware/auth');
+const { validateLocation } = require('../middleware/validation');
 const router = express.Router();
 
 // Use Cloudinary storage for persistent image hosting
@@ -19,10 +20,14 @@ const upload = multer({
   }
 });
 
-// Apply auth middleware to all user routes
+// --- Admin migration routes (no JWT required, protected by secret param) ---
+// Usage: GET /api/users/admin/clear-stale-images?secret=YOUR_MIGRATION_SECRET
+router.get('/admin/clear-stale-images', userController.clearStaleLocalImages);
+
+// Apply auth middleware to ALL routes below this line
 router.use(auth);
 
-// --- Place all specific routes BEFORE parameterized routes ---
+// --- Specific routes BEFORE parameterized routes ---
 
 // Get all users with status (for retailers)
 router.get('/with-status', userController.getUsersWithStatus);
@@ -35,8 +40,6 @@ router.get('/followed-retailers', userController.getFollowedRetailers);
 
 // Unfollow a retailer
 router.post('/unfollow', userController.unfollowRetailer);
-
-const { validateLocation } = require('../middleware/validation');
 
 // Update user location
 router.post('/update-location', validateLocation, userController.updateLocation);
@@ -55,7 +58,7 @@ router.get('/online', userController.getOnlineUsers);
 
 // --- Parameterized routes LAST ---
 
-// Update user profile
+// Update user profile (with file uploads to Cloudinary)
 router.put('/:id', upload.fields([
   { name: 'profilePic', maxCount: 1 },
   { name: 'businessLogo', maxCount: 1 },

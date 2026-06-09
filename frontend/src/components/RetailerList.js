@@ -1,4 +1,5 @@
   import React from 'react';
+  import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
   export default function RetailerList({ retailers, followedIds, onFollow }) {
     return (
@@ -6,9 +7,10 @@
         {retailers.map(retailer => (
           <div key={retailer._id} className="retailer-card" style={{ display: "flex", alignItems: "center", marginBottom: 16, background: "#fff", borderRadius: 8, padding: 12 }}>
             <img
-              src={retailer.businessLogo || "/default-business.png"}
+              src={retailer.businessLogo ? resolveAssetUrl(retailer.businessLogo) : "/default-business.png"}
               alt={retailer.shopName}
               style={{ width: 50, height: 50, borderRadius: "50%", marginRight: 16, objectFit: "cover" }}
+              onError={(e) => { e.target.onerror = null; e.target.src = '/default-business.png'; }}
             />
             <div style={{ flex: 1 }}>
               <h4 style={{ margin: 0 }}>{retailer.shopName}</h4>
